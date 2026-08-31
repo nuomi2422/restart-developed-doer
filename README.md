@@ -5,6 +5,15 @@
 
 ---
 
+## 📇 改动索引 & 完成状态（先看这里）
+
+- **对宿主改动极小**：144 个改动文件里 **125 个是我们新增的自有代码**，真正改 Numen 原文件的只有 **19 处**（assist 模式 + 观测埋点 + 构建，全部叠加扩展，不动宿主核心语义）。
+- **完成状态**：监测台 ✅ ｜ AC 执行 ✅ ｜ RDD 任务链 ✅ ｜ Self-Compile ✅ ｜ **expmem ⚠️ 部分完成**（词法检索✅，语义检索依赖外部 BGE embedding + 灵魂核心向量索引，详见下）
+- 完整清单：**[`docs/MODIFICATIONS-INDEX.md`](docs/MODIFICATIONS-INDEX.md)**（索引）｜ **[`MODIFICATIONS.md`](MODIFICATIONS.md)**（逐模块交代）｜ **patch**：[`patches/heartpact-modifications.patch`](patches/heartpact-modifications.patch)
+- 纯自有代码仓库：[**restart-developed-doer-core**](https://github.com/nuomi2422/restart-developed-doer-core)（去掉宿主 patch 视角，只看我们自己的代码）
+
+---
+
 ## ⚠️ 借用宿主声明（Important）
 
 本项目**暂时借用** [Numen](https://github.com/Dwinovo/minecraft-numen)（NeoForge 1.21.1 的 AI 同伴宿主）作为运行宿主。
@@ -31,7 +40,7 @@
 | 1 | **监测台**（monitoring-station/） | 实时观测 AI 思考/工具/任务/经验/架构文档 | — |
 | 2 | **AC 执行** | 多步脚本引擎：底层工具组合成高层调用（降费） | ac.jsonl |
 | 3 | **RDD 任务链** | 目标分解 + 资产检测 + **卡死监督**（STALLED→拍醒→恢复） | rdd.jsonl |
-| 4 | **expmem 经验** | learn/recall/verify 经验记忆 | expmem.jsonl |
+| 4 | **expmem 经验** ⚠️ | learn/recall/verify 经验记忆（词法检索✅；语义检索依赖外部 BGE embedding + 灵魂核心向量索引，未做） | expmem.jsonl |
 | 5 | **Self-Compile** | 生成工具→编译→部署→生效（自变异） | ai.jsonl |
 
 > 五大系统的纯 JVM 核心在 Numen 仓库（ac-core/rdd-core/experience-core/plugins/*），
@@ -66,8 +75,10 @@
 ```text
 src/                  ★ 五大模块 Java 源码（ac-api/ac-core/rdd-core/experience-core + plugins/*，共 125 文件）
 monitoring-station/   监测台（含"介绍"分页：项目定位一目了然）
-docs/                 架构决策文档（五大系统 spec / 数据流 / 运行报告）
-scripts/              外部自编译编排脚本
+docs/                 架构决策文档 + 改动索引（MODIFICATIONS-INDEX.md）
+scripts/              外部自编译编排脚本（run-mutation 闭环 / 止损循环等 10 个 .ps1）
+skills/               自变异系统的 AI 编程技能（rdd-selfcompile：外带 skill 同步收录）
+templates/            NumenTool 生成系统提示词模板
 patches/              heartpact-modifications.patch（对借用宿主 Numen 的改动 diff）
 MODIFICATIONS.md      对 Numen 的修改说明（逐模块交代，含回滚方式）
 ```

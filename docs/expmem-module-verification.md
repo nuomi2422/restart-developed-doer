@@ -57,6 +57,17 @@ settings.gradle 冲突是共享文件正常现象（revert 该 commit 会尝试�
 - 自动提炼/自动注入未实现（目前只能 AI 主动调 3 工具）
 - experience_verify 的 success 必须来自真实观察（不认 AI 自述）
 
+## §6 外部依赖声明（不隐瞒）
+
+> **expmem = ⚠️ 部分完成**：词法检索（`LexicalExperienceRetriever`）✅ 独立可用；
+> **语义/向量召回未实现**，依赖外部项目，当前未接入：
+>
+> 1. **BGE embedding 模型**（句向量生成）
+> 2. **灵魂核心向量索引**（soul-core-bridge 并档共享记忆，`life:` 前缀语义召回）——独立的 Java↔Python 桥接工程
+>
+> 接缝已留好：已有向量检索能力时，写一个 `VectorExperienceRetriever` 替换即可，模型不用改。
+> 详见 [`MODIFICATIONS-INDEX.md`](MODIFICATIONS-INDEX.md) §D。
+
 ## 结论
 
 **expmem 模块通过验证。** 20/20 单测、jar 完整、游戏加载、learn/recall/verify 全闭环、成熟度升级、失败反例、去重合并全部真实通过。
