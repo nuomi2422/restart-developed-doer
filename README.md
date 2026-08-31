@@ -10,6 +10,7 @@
 - **对宿主改动极小**：144 个改动文件里 **125 个是我们新增的自有代码**，真正改 Numen 原文件的只有 **19 处**（assist 模式 + 观测埋点 + 构建，全部叠加扩展，不动宿主核心语义）。
 - **完成状态**：监测台 ✅ ｜ AC 执行 ✅ ｜ RDD 任务链 ✅ ｜ Self-Compile ✅ ｜ **expmem ⚠️ 部分完成**（词法检索✅，语义检索依赖外部 BGE embedding + 灵魂核心向量索引，详见下）
 - 完整清单：**[`docs/MODIFICATIONS-INDEX.md`](docs/MODIFICATIONS-INDEX.md)**（索引）｜ **[`MODIFICATIONS.md`](MODIFICATIONS.md)**（逐模块交代）｜ **patch**：[`patches/heartpact-modifications.patch`](patches/heartpact-modifications.patch)
+- 能力评估（诚实自评：极限/天花板/外部评判/提升路线）：**[`docs/CAPABILITY-ASSESSMENT.md`](docs/CAPABILITY-ASSESSMENT.md)**
 - 纯自有代码仓库：[**restart-developed-doer-core**](https://github.com/nuomi2422/restart-developed-doer-core)（去掉宿主 patch 视角，只看我们自己的代码）
 
 ---
