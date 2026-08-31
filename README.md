@@ -67,7 +67,11 @@
 monitoring-station/   监测台（含"介绍"分页：项目定位一目了然）
 docs/                 架构决策文档（五大系统 spec / 数据流 / 运行报告）
 scripts/              外部自编译编排脚本
+patches/              heartpact-modifications.patch（对借用宿主 Numen 的全部改动 diff）
+MODIFICATIONS.md      对 Numen 的修改说明（逐模块交代，含回滚方式）
 ```
+
+> 🔧 **我们对借用宿主 Numen 改了什么？** 见 [MODIFICATIONS.md](MODIFICATIONS.md)（逐模块交代 + `patches/heartpact-modifications.patch` 全量 diff，可直接 apply / 反向回滚）。
 
 ## 许可证
 
