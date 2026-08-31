@@ -34,6 +34,9 @@
 - **降费**：AC 组合（1 次 ac_execute 顶 3 次底层工具调用，AI 已学会用）
 - **自扩展**：缺工具 → selfcompile 生成 → 生效（rdd_get_inventory 已验证）
 - **资产感知**：RDD AssetRegistry 报真实背包（rdd_status assets=10）
+- **升级路径**：Level 1 卡死 → Level 2 重试 → Level 3 能力不足 → 自编译引导，全触发验证
+
+> 📄 **完整真机成果 + 原始日志**：见 [`docs/REAL-VERIFICATION-RESULTS.md`](../docs/REAL-VERIFICATION-RESULTS.md)（10 项逐条带证据）
 
 ## 怎么接入（对别的 AI）
 
