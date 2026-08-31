@@ -1,0 +1,31 @@
+modLoader = "javafml"
+loaderVersion = "${neoforge_loader_version_range}"
+license = "${license}"
+
+[[mods]]
+modId = "expmem"
+version = "${version}"
+displayName = "Experience Memory"
+authors = "dwinovo"
+description = '''Experience memory runtime adapter for Numen: learn, recall and verify reusable lessons from task/tool/execution outcomes.'''
+
+[[dependencies.expmem]]
+modId = "numen_api"
+type = "required"
+versionRange = "[0.0,)"
+ordering = "AFTER"
+side = "BOTH"
+
+[[dependencies.expmem]]
+modId = "neoforge"
+type = "required"
+versionRange = "[${neoforge_version},)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.expmem]]
+modId = "minecraft"
+type = "required"
+versionRange = "${minecraft_version_range}"
+ordering = "NONE"
+side = "BOTH"

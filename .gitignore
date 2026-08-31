@@ -1,0 +1,9 @@
+# 运行/构建产物
+build/
+*.log
+*.class
+node_modules/
+
+# 浏览器/工具临时
+.playwright-mcp/
+*.tmp

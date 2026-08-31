@@ -9,9 +9,9 @@
 
 本项目**暂时借用** [Numen](https://github.com/Dwinovo/minecraft-numen)（NeoForge 1.21.1 的 AI 同伴宿主）作为运行宿主。
 
-- Numen 是**其原作者的开源项目**，本项目**不包含、不修改 Numen 本体源码**（需按原项目自行构建部署）；
+- Numen 是**其原作者的开源项目**，本项目**不包含 Numen 原版源码**（需按原项目自行构建部署）；
 - 本项目在 Numen 之上构建**五大模块化系统**，经 `Adapter / Port` 与宿主隔离——未来宿主可替换为任意 AI / 环境执行系统；
-- 本仓库只含**本项目自有代码与文档**（监测台、架构决策、外部编排脚本），不含 Numen 源码。
+- 本仓库含**本项目自有源码**（`src/`：ac-api/ac-core/rdd-core/experience-core + plugins/*，共 125 Java 文件，依赖 Numen 编译）+ 监测台 + 架构文档 + 编排脚本 + 对宿主的改动 patch。
 
 ---
 
@@ -64,10 +64,11 @@
 ## 目录
 
 ```text
+src/                  ★ 五大模块 Java 源码（ac-api/ac-core/rdd-core/experience-core + plugins/*，共 125 文件）
 monitoring-station/   监测台（含"介绍"分页：项目定位一目了然）
 docs/                 架构决策文档（五大系统 spec / 数据流 / 运行报告）
 scripts/              外部自编译编排脚本
-patches/              heartpact-modifications.patch（对借用宿主 Numen 的全部改动 diff）
+patches/              heartpact-modifications.patch（对借用宿主 Numen 的改动 diff）
 MODIFICATIONS.md      对 Numen 的修改说明（逐模块交代，含回滚方式）
 ```
 

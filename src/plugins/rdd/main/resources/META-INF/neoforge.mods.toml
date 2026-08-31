@@ -1,0 +1,31 @@
+modLoader = "javafml"
+loaderVersion = "${neoforge_loader_version_range}"
+license = "${license}"
+
+[[mods]]
+modId = "rdd"
+version = "${version}"
+displayName = "RDD Asset Task Chain"
+authors = "dwinovo"
+description = '''RDD asset task-chain runtime adapter.'''
+
+[[dependencies.rdd]]
+modId = "numen_api"
+type = "required"
+versionRange = "[0.0,)"
+ordering = "AFTER"
+side = "BOTH"
+
+[[dependencies.rdd]]
+modId = "neoforge"
+type = "required"
+versionRange = "[${neoforge_version},)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.rdd]]
+modId = "minecraft"
+type = "required"
+versionRange = "${minecraft_version_range}"
+ordering = "NONE"
+side = "BOTH"

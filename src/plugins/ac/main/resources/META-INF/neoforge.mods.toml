@@ -1,0 +1,31 @@
+modLoader = "javafml"
+loaderVersion = "${neoforge_loader_version_range}"
+license = "${license}"
+
+[[mods]]
+modId = "ac"
+version = "${version}"
+displayName = "AC Execution Plugin"
+authors = "dwinovo"
+description = '''Host-independent AC execution layer: register host atomic tools, run and resume AC scripts, expose ac_execute/ac_status/ac_resume gates to the agent.'''
+
+[[dependencies.ac]]
+modId = "numen_api"
+type = "required"
+versionRange = "[0.0,)"
+ordering = "AFTER"
+side = "BOTH"
+
+[[dependencies.ac]]
+modId = "neoforge"
+type = "required"
+versionRange = "[${neoforge_version},)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.ac]]
+modId = "minecraft"
+type = "required"
+versionRange = "${minecraft_version_range}"
+ordering = "NONE"
+side = "BOTH"
