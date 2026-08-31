@@ -1,4 +1,4 @@
-# Touhou Little Maid: HeartPact（车万女仆 · 心之契约）
+# restart-developed-doer
 
 > **这是一个开源工程，不是 Mod**：一套住在 Minecraft 里的 **AI Agent Runtime / 自编译系统**——
 > AI 自主玩游戏、任务链监督、经验沉淀、缺能力自编译补上，全程可观测可验证。
