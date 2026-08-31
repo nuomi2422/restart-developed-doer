@@ -1,0 +1,294 @@
+/* ============================================================
+   theme.css — 主题设计令牌 + 通用组件
+   色板/字体从 ApricityUI 内置 Ore 主题 抄取（合作者指定方向，见 HANDOFF）：
+   Ore = Minecraft-CSS 移植（MPL 2.0），这里只对齐其色值与字体，
+   不复刻其源码/结构。字体本地副本在 assets/fonts/（MC 原版字形）。
+   语义色（用户确认）：红=错误 / 黄=警告 / 蓝=信息·执行中 / 绿=通过·主色 / 紫=AI·调试
+   ============================================================ */
+
+/* ---- Ore 字体（MC 原版字形；中文走后备字体栈） ---- */
+@font-face {
+  font-family: "OreDisplay";
+  src: url("../assets/fonts/minecraft-ten.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+}
+@font-face {
+  font-family: "OreRegular";
+  src: url("../assets/fonts/minecraft-regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+}
+
+:root {
+  /* 中性层（抄 Ore） */
+  --bg-0: #1c1d1f;          /* 最底层/舞台 */
+  --bg-1: #202124;          /* 面板 = ore-canvas */
+  --bg-2: #313233;          /* 面板头/抬升面 = ore-surface-deep */
+  --bg-3: #48494a;          /* 悬停 = ore-surface */
+  --border: #2c2d30;        /* 普通边框 */
+  --border-strong: #1e1e1f; /* 强调边框 = ore-edge */
+  --border-light: #77797c;  /* 浅边框/内高光 = ore-edge-light */
+  --fg: #f4f5f7;            /* 主文字 = ore-ink */
+  --fg-dim: #b6bac1;        /* 次要文字 = ore-ink-muted */
+  --fg-faint: #77797c;      /* 弱文字 = ore-edge-light */
+
+  /* 语义色（抄 Ore） */
+  --accent: #69ad45;        /* 主色/选中/焦点 = ore-success 绿 */
+  --accent-deep: #3c8527;   /* 主按钮 = ore-green */
+  --accent-deep-hover: #2a641c;
+  --accent-deep-shadow: #1d4d13;
+  --green: #69ad45;         /* 成功/通过/已连接 */
+  --blue: #58a6d2;          /* 执行中/信息/护甲 = ore-info */
+  --blue-deep: #2d78a8;     /* = ore-blue */
+  --gold: #f0b92d;          /* 品牌 = ore-gold */
+  --amber: #f0b92d;         /* 等待/暂停/警告 = ore-warning */
+  --red: #d45b50;           /* 失败/危险 = ore-danger */
+  --red-deep: #b33b31;      /* 危险按钮 = ore-red */
+  --red-shadow: #662019;
+  --purple: #7345e5;        /* AI/调试/次级 = ore-purple */
+  --purple-hover: #5d2cc6;
+  --purple-shadow: #4a1cac;
+
+  /* 像素几何 */
+  --px: 2px;                /* 像素边框基准线宽 */
+  --px-strong: 3px;         /* 主框/主按钮线宽 */
+  --radius: 0px;            /* 锐角（像素风） */
+  --gap: 6px;
+
+  /* 内嵌面（聊天气泡条等）；明暗各配 */
+  --well: rgba(255, 255, 255, 0.06);
+
+  /* 阴影：MC 面板内浮雕 + 悬浮外阴影（--bevel-hi=左上内高光，随明暗翻） */
+  --bevel-hi: #77797c;
+  --shadow-bevel:     inset 2px 2px var(--bevel-hi), inset -2px -2px rgba(0, 0, 0, 0.35);
+  --shadow-bevel-deep: inset 2px 2px rgba(255, 255, 255, 0.06), inset -2px -2px rgba(0, 0, 0, 0.4);
+  --shadow-console:   0 10px 28px rgba(0, 0, 0, 0.55);
+
+  /* 字号（小屏游戏内密集，保持小号） */
+  --fs-lg: 15px;
+  --fs-md: 13px;
+  --fs-sm: 11px;
+  --fs-xs: 9px;
+
+  /* 字体：品牌/标题 OreDisplay(MC 原版)，正文 OreRegular，数字/数据等宽，中文后备 */
+  --font-brand: "OreDisplay", "minecraft-ten", "Microsoft YaHei", "PingFang SC", sans-serif;
+  --font-body: "OreRegular", "minecraft-regular", "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
+  --font-mono: "Consolas", "Cascadia Mono", monospace;
+}
+
+/* ---- 浅色主题：[data-theme="light"] 切换。Ore 无内置浅色（jar 只带暗色），
+   语义色原样沿用，只把中性层翻成浅色 —— 即"Ore 浅色版" ---- */
+[data-theme="light"] {
+  --bg-0: #eef0f2;          /* 舞台 */
+  --bg-1: #ffffff;          /* 面板 */
+  --bg-2: #e2e5e9;          /* 面板头/抬升面 */
+  --bg-3: #cfd3d8;          /* 悬停 */
+  --border: #c3c7cd;
+  --border-strong: #9aa0a6;
+  --border-light: #c3c7cd;  /* 浅边框/竖线（明主题下用灰而非白，才看得见） */
+  --bevel-hi: #ffffff;      /* 内高光=白，MC 浮雕左上亮 */
+  --well: rgba(0, 0, 0, 0.05);
+  --fg: #1f2224;
+  --fg-dim: #5a5f66;
+  --fg-faint: #8d939b;
+  --shadow-bevel:     inset 2px 2px var(--bevel-hi), inset -2px -2px rgba(0, 0, 0, 0.15);
+  --shadow-bevel-deep: inset 2px 2px rgba(255, 255, 255, 0.85), inset -2px -2px rgba(0, 0, 0, 0.12);
+  --shadow-console:   0 10px 28px rgba(0, 0, 0, 0.22);
+
+  /* 语义色：降饱和+加深（白底不刺眼、文字仍可读）。暗色=鲜亮版、浅色=muted版，标准做法 */
+  --accent: #4f7d43;
+  --accent-deep: #3a6d2f;
+  --accent-deep-hover: #2f5827;
+  --accent-deep-shadow: #24491e;
+  --green: #4f7d43;
+  --blue: #3a7ca5;
+  --blue-deep: #2f6283;
+  --gold: #c08a1f;
+  --amber: #c08a1f;
+  --red: #b34a44;
+  --red-deep: #9c3e39;
+  --red-shadow: #5e231f;
+  --purple: #5f43a8;
+  --purple-hover: #4d3691;
+  --purple-shadow: #3d2c78;
+}
+
+/* ---------- 通用组件（MC 浮雕风，对齐 Ore 质感） ---------- */
+
+/* 面板：深灰 + 2px 黑边 + 内浮雕 */
+.panel {
+  background: var(--bg-1);
+  border: var(--px) solid var(--border-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-bevel);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap);
+  padding: 6px 10px;
+  background: var(--bg-2);
+  border-bottom: var(--px) solid var(--border-strong);
+  border-radius: 0;
+  flex: none;
+}
+
+.panel-title {
+  color: var(--fg-dim);
+  font-size: var(--fs-sm);
+  font-family: var(--font-brand);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* 面板头右侧标签（如"当前目标"） */
+.task-switcher {
+  color: var(--fg-faint);
+  font-size: var(--fs-xs);
+  border: 1px solid var(--border-strong);
+  padding: 1px 6px;
+  border-radius: var(--radius);
+  background: var(--bg-1);
+  cursor: pointer;
+}
+.task-switcher:hover { color: var(--fg-dim); border-color: var(--border-light); }
+
+/* 徽章：MC 彩色填充块（对齐 Ore .badge-*） */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 1px 8px;
+  font-size: var(--fs-xs);
+  line-height: 1.7;
+  border: var(--px) solid var(--border-strong);
+  border-radius: var(--radius);
+  color: #ffffff;
+  background: var(--bg-2);
+  white-space: nowrap;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.35);
+}
+.badge::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 0;
+  background: currentColor;
+}
+.badge-ok   { color: #ffffff; background: var(--green); }
+.badge-run  { color: #ffffff; background: var(--blue); }
+.badge-wait { color: #221b0d; background: var(--gold); }
+.badge-fail { color: #ffffff; background: var(--red); }
+.badge-off  { color: var(--fg-dim); background: var(--bg-2); }
+
+/* MC 按钮：3D 浮雕，按下内陷（对齐 Ore .button-*） */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 12px;
+  font-size: var(--fs-sm);
+  font-family: var(--font-body);
+  color: var(--fg);
+  background: var(--bg-2);
+  border: var(--px) solid var(--border-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-bevel-deep);
+  transition: background-color 0.08s, border-color 0.08s, box-shadow 0.08s;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.btn:hover  { background: var(--bg-3); border-color: var(--border-light); }
+.btn:active { transform: translate(1px, 2px); box-shadow: inset 1px 1px rgba(0, 0, 0, 0.4); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-primary {
+  color: #ffffff;
+  background: var(--accent-deep);
+  box-shadow: inset 0 -4px var(--accent-deep-shadow), inset 0 2px rgba(255, 255, 255, 0.18);
+}
+.btn-primary:hover { background: var(--accent-deep-hover); }
+.btn-secondary {
+  color: #ffffff;
+  background: var(--purple);
+  box-shadow: inset 0 -4px var(--purple-shadow), inset 0 2px rgba(255, 255, 255, 0.18);
+}
+.btn-secondary:hover { background: var(--purple-hover); }
+.btn-danger {
+  color: #ffffff;
+  background: var(--red-deep);
+  box-shadow: inset 0 -4px var(--red-shadow), inset 0 2px rgba(255, 255, 255, 0.15);
+}
+.btn-danger:hover { background: #8b2923; }
+.btn-ghost   { background: transparent; box-shadow: none; }
+
+/* 图标按钮（标题栏） */
+.icon-btn {
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  color: var(--fg-dim);
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  cursor: pointer;
+  background: transparent;
+}
+.icon-btn:hover { color: var(--fg); background: var(--bg-2); border-color: var(--border-strong); }
+.icon-btn-danger:hover { color: var(--red); border-color: var(--red); }
+
+/* 页签（渲染区域切换，像素下划线 + 主色） */
+.mode-tab {
+  padding: 2px 9px;
+  font-size: var(--fs-xs);
+  color: var(--fg-faint);
+  border: 1px solid transparent;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  cursor: pointer;
+}
+.mode-tab:hover { color: var(--fg-dim); }
+.mode-tab.active {
+  color: var(--fg);
+  background: var(--bg-2);
+  border-color: var(--border-strong);
+  border-bottom-color: var(--accent);
+  box-shadow: inset 0 0 0 1px rgba(105, 173, 69, 0.15);
+}
+
+/* 物品小方块（资源图标占位；接入晴雪UI 后换 <texture>） */
+.item-tile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  font-size: 11px;
+  color: var(--fg-dim);
+  background: var(--bg-0);
+  border: 1px solid var(--border-strong);
+  border-radius: 0;
+  box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.35);
+  image-rendering: pixelated;
+  flex: none;
+}
+.item-tile-unknown { border-style: dashed; color: var(--fg-faint); }
+
+/* 空值弱色 */
+.none-v { color: var(--fg-faint); font-size: var(--fs-xs); }
+.health-num { color: var(--fg-faint); font-size: var(--fs-xs); }
+
+/* 滚动条（像素化窄条） */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: var(--bg-3); border-radius: 0; border: 1px solid var(--border-strong); }
+::-webkit-scrollbar-track { background: var(--bg-0); }
