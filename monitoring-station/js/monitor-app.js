@@ -1,5 +1,5 @@
 (function () {
-  var titles = { overview: "总览", ai: "AI / Thinking", context: "Context", tools: "Tools", ac: "AC", environment: "环境", health: "健康 / Watchdog", intro: "项目介绍", docs: "文档" };
+  var titles = { overview: "总览", ai: "AI / Thinking", context: "Context", tools: "Tools", ac: "AC", rdd: "RDD 任务链", environment: "环境", health: "健康 / Watchdog", intro: "项目介绍", docs: "文档" };
   var DOCS = ["INTRO", "ARCHITECTURE", "CONTRACT", "INTERFACES", "REGRESSION", "HANDOFF"];
   var docNames = { INTRO: "项目介绍", ARCHITECTURE: "架构总览", CONTRACT: "模块契约", INTERFACES: "接口清单", REGRESSION: "回归清单", HANDOFF: "交接文档" };
   var page = "overview";
@@ -97,6 +97,13 @@
       h = card("工具调用记录", table + '</table>', "wide") + card("控制能力", kv("工具开关", "UNSUPPORTED", "state-warn") + kv("真实执行", "等待 Adapter") + '<button class="btn" disabled>关闭工具（暂不可用）</button>');
     } else if (page === "ac") {
       h = card("AC Execution", '<div class="graph"><span class="node done">inspect</span><span class="arrow">→</span><span class="node">prepare</span><span class="arrow">→</span><span class="node">execute</span><span class="arrow">→</span><span class="node">verify</span></div>' + kv("AC 本体", "等待 RDD 提供") + kv("当前状态", "PENDING", "state-warn"), "wide") + eventsCard("AC 事件", events);
+    } else if (page === "rdd") {
+      var latest = null;
+      for (var ri = events.length - 1; ri >= 0; ri--) {
+        if (events[ri].type === "taskchain_snapshot" || (events[ri].payload && events[ri].payload.taskChain)) { latest = events[ri].payload.taskChain || events[ri].payload; break; }
+      }
+      var chainHtml = latest ? '<div class="pre">' + esc(JSON.stringify(latest, null, 2)) + '</div>' : '<div class="empty">暂无任务链快照 · 等待 RDD 事件</div>';
+      h = card("任务链详情（只读）", chainHtml, "wide") + eventsCard("RDD 事件 / 推进原因 / 监督消息", events);
     } else if (page === "environment") {
       h = card("Environment Snapshot", '<div class="empty">暂无真实环境快照<br>不会用 Mock 文本冒充 MC 世界状态</div>', "wide");
     } else if (page === "health") {
