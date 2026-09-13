@@ -6,6 +6,7 @@
   var content = document.getElementById("monitor-content");
   var title = document.getElementById("page-title");
   var tabs = document.querySelectorAll("#monitor-tabs button");
+  var renderQueued = false;
 
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function kv(k, v, cls) { return '<div class="kv"><span class="k">' + esc(k) + '</span><span class="v ' + (cls || "") + '">' + esc(v) + '</span></div>'; }
@@ -290,6 +291,11 @@
     document.getElementById("last-event").textContent = events.length ? events[events.length - 1].timestamp.slice(11, 19) : "—";
     for (var j = 0; j < tabs.length; j++) { tabs[j].classList.toggle("active", tabs[j].getAttribute("data-page") === page); }
   }
+  function scheduleRender() {
+    if (renderQueued) return;
+    renderQueued = true;
+    window.requestAnimationFrame(function () { renderQueued = false; render(); });
+  }
   for (var i = 0; i < tabs.length; i++) { tabs[i].addEventListener("click", function () { page = this.getAttribute("data-page"); MonitorStore.setPage(page); }); }
   // 文档下拉切换（docs 分页）
   document.addEventListener("change", function (ev) {
@@ -304,7 +310,7 @@
   });
   rddSupSync();
   setInterval(function () { if (page === "taskchain" || page === "rdd") rddSupSync(); }, 4000);
-  MonitorStore.subscribe(render);
+  MonitorStore.subscribe(scheduleRender);
   NumenAdapter.subscribe(function (message) { MonitorStore.accept(message); });
   NumenAdapter.start();
   var savedFontScale = localStorage.getItem('rdd-monitor-font-scale') || 'large';

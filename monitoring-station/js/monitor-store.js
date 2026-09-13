@@ -16,7 +16,7 @@ var MonitorStore = (function () {
     { category: "health", type: "heartbeat", text: "监测台自身心跳正常", payload: { status: "STABLE" } }
   ];
   function emit() { for (var i = 0; i < listeners.length; i++) { try { listeners[i](); } catch (e) {} } }
-  function add(event) {
+  function add(event, quiet) {
     var page = event.category || "overview";
     if (!pages[page]) { page = "overview"; dropped++; }
     event.sequence = ++sequence;
@@ -37,12 +37,21 @@ var MonitorStore = (function () {
       }
       pages[page].splice(remove, 1); dropped++;
     }
+    if (!quiet) emit();
+  }
+  function addMany(events) {
+    if (!Array.isArray(events) || !events.length) return;
+    for (var i = 0; i < events.length; i++) add(events[i] || {}, true);
     emit();
   }
   function accept(message) {
     if (!message) return;
     if (message.type === "event") add(message.payload || {});
-    else if (message.type === "connection") { connection = message.payload || connection; emit(); }
+    else if (message.type === "events") addMany(message.payload || []);
+    else if (message.type === "connection") {
+      var next = message.payload || connection;
+      if (next.connected !== connection.connected || next.source !== connection.source) { connection = next; emit(); }
+    }
     else if (message.type === "commandResult") { commandResults.push(message.payload || {}); if (commandResults.length > 100) commandResults.shift(); emit(); }
   }
   function clear() { pages[current] = []; emit(); }
@@ -51,5 +60,5 @@ var MonitorStore = (function () {
   function inject() { var e = fixtures[sequence % fixtures.length]; add({ category: e.category, type: e.type, text: e.text, payload: e.payload, source: "mock" }); }
   function subscribe(listener) { listeners.push(listener); }
   function stats() { var total = 0; for (var page in pages) total += pages[page].length; return { queue: total, dropped: dropped, sequence: sequence, connected: !!connection.connected, commandResults: commandResults.slice() }; }
-  return { accept: accept, add: add, clear: clear, setPage: setPage, getPage: function () { return current; }, getEvents: getEvents, inject: inject, subscribe: subscribe, stats: stats, health: function () { return connection; } };
+  return { accept: accept, add: add, addMany: addMany, clear: clear, setPage: setPage, getPage: function () { return current; }, getEvents: getEvents, inject: inject, subscribe: subscribe, stats: stats, health: function () { return connection; } };
 }());

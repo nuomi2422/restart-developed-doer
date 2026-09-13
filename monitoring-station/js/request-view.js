@@ -5,7 +5,11 @@ var RequestView = (function () {
   function latest(events, predicate) {
     return events.filter(predicate).sort(function (a, b) { return Date.parse(b.timestamp) - Date.parse(a.timestamp) || (b.sequence || 0) - (a.sequence || 0); })[0];
   }
-  function raw(value) { return '<pre class="pre audit-text">' + esc(typeof value === 'string' ? value : JSON.stringify(value, null, 2)) + '</pre>'; }
+  function raw(value) {
+    var text = typeof value === 'string' ? value : JSON.stringify(value, null, 2);
+    if (text.length > 16000) text = text.slice(0, 16000) + '\n\n[Preview truncated; the source journal is unchanged.]';
+    return '<pre class="pre audit-text">' + esc(text) + '</pre>';
+  }
   function fold(id, title, body, initial) {
     var isOpen = Object.prototype.hasOwnProperty.call(opened, id) ? opened[id] : !!initial;
     return '<details data-audit-id="' + esc(id) + '"' + (isOpen ? ' open' : '') + '><summary>' + esc(title) + '</summary>' + body + '</details>';

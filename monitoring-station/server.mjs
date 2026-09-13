@@ -1,5 +1,5 @@
 import { createServer } from "node:http";
-import { readFile, stat } from "node:fs/promises";
+import { readFile, stat, open } from "node:fs/promises";
 import { extname, join, normalize, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { readFileSync } from "node:fs";
@@ -8,9 +8,11 @@ const HERE = resolve(fileURLToPath(new URL(".", import.meta.url)));
 const PROJECT = resolve(HERE, "..");
 const HOST = process.env.RDD_MONITOR_HOST || "127.0.0.1";
 const PORT = Number.parseInt(process.env.RDD_MONITOR_PORT || "8776", 10);
-const MONITOR_DIR = resolve(process.env.NUMEN_MONITOR_DIR || process.argv[2] || join(PROJECT, "runtime", "numen-monitor"));
-const MAX_FILE_BYTES = 4 * 1024 * 1024;
-const MAX_EVENTS = 500;
+const DEFAULT_GAME_MONITOR_DIR = "E:\\.minecraft\\versions\\The Best of Twilight Forest\\config\\numen\\monitor";
+const MONITOR_DIR = resolve(process.env.NUMEN_MONITOR_DIR || process.argv[2] || DEFAULT_GAME_MONITOR_DIR || join(PROJECT, "runtime", "numen-monitor"));
+const MAX_TAIL_BYTES = 2 * 1024 * 1024;
+const MAX_EVENTS = 80;
+const MAX_EVENT_DATA_BYTES = 16 * 1024;
 const MIME = { ".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".json": "application/json; charset=utf-8", ".md": "text/markdown; charset=utf-8", ".woff2": "font/woff2", ".ttf": "font/ttf", ".otf": "font/otf" };
 const CATEGORIES = new Set(["events", "state", "tools", "ai", "context", "ac", "environment", "health", "commands", "rdd", "expmem", "selfcompile"]);
 
@@ -21,15 +23,38 @@ function json(response, status, value) {
   response.writeHead(status, headers("application/json; charset=utf-8"));
   response.end(JSON.stringify(value));
 }
+function compactEvent(event) {
+  if (!event || !event.data || event.type === "taskchain_snapshot") return event;
+  let raw;
+  try { raw = JSON.stringify(event.data); } catch { return { ...event, data: { monitorTruncated: true, reason: "unserializable" } }; }
+  if (Buffer.byteLength(raw, "utf8") <= MAX_EVENT_DATA_BYTES) return event;
+  return { ...event, data: { monitorTruncated: true, originalBytes: Buffer.byteLength(raw, "utf8"), preview: raw.slice(0, MAX_EVENT_DATA_BYTES) } };
+}
+function prioritizeEvents(category, events) {
+  if (category !== "rdd") return events.slice(-MAX_EVENTS).map(compactEvent);
+  const latestSnapshots = new Map();
+  const ordinary = [];
+  for (const event of events) {
+    if (event.type === "taskchain_snapshot" && event.data) latestSnapshots.set(event.data.companionId || event.data.companion_id || "unknown", event);
+    else ordinary.push(event);
+  }
+  return ordinary.slice(-40).concat(Array.from(latestSnapshots.values())).map(compactEvent);
+}
 async function readCategory(category) {
   if (!CATEGORIES.has(category)) return [];
   const file = join(MONITOR_DIR, category + ".jsonl");
   try {
     const info = await stat(file);
-    if (info.size > MAX_FILE_BYTES) return [{ category: "health", type: "source_oversize", data: { category, bytes: info.size } }];
-    const text = await readFile(file, "utf8");
-    const lines = text.split(/\r?\n/).filter(Boolean).slice(-MAX_EVENTS);
-    return lines.map((line) => { try { return JSON.parse(line); } catch { return { category: "health", type: "invalid_jsonl", data: { category } }; } });
+    const bytes = Math.min(info.size, MAX_TAIL_BYTES);
+    const handle = await open(file, "r");
+    const buffer = Buffer.alloc(bytes);
+    try { await handle.read(buffer, 0, bytes, Math.max(0, info.size - bytes)); }
+    finally { await handle.close(); }
+    // The first line may start in the middle of a UTF-8 JSON line; discard it.
+    const text = buffer.toString("utf8");
+    const lines = text.split(/\r?\n/).slice(info.size > bytes ? 1 : 0).filter(Boolean).slice(-MAX_EVENTS);
+    const events = lines.map((line) => { try { return JSON.parse(line); } catch { return { category: "health", type: "invalid_jsonl", data: { category } }; } });
+    return prioritizeEvents(category, events);
   } catch { return []; }
 }
 async function snapshot() {

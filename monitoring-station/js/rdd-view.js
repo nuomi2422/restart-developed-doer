@@ -13,9 +13,11 @@ var RddView = (function () {
       var e = events[i], p = e.payload || {};
       if (types && types.indexOf(e.type) < 0) continue;
       var body = p.context || p.message || p.text || p.objective || e.text || p;
+      var bodyText = typeof body === 'string' ? body : JSON.stringify(body, null, 2);
+      if (bodyText.length > 16000) bodyText = bodyText.slice(0, 16000) + '\n\n[Preview truncated; the source journal is unchanged.]';
       var meta = { source: p.source || e.source, target: p.target, companion: companion(e), taskId: p.taskId, subtaskId: p.subtaskId, inputId: p.inputId, outputId: p.outputId };
       h += disclosure(e.eventId || String(e.sequence), (e.timestamp || '') + ' · ' + e.type,
-        '<pre class="pre">' + esc(typeof body === 'string' ? body : JSON.stringify(body, null, 2)) + '</pre><pre class="pre">' + esc(JSON.stringify(meta, null, 2)) + '</pre>', count === 0);
+        '<pre class="pre">' + esc(bodyText) + '</pre><pre class="pre">' + esc(JSON.stringify(meta, null, 2)) + '</pre>', count === 0);
       count++;
     }
     return h || '<div class="empty">尚未记录此上下文</div>';
