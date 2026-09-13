@@ -14,7 +14,8 @@ var NumenAdapter = (function () {
     if (c === "events") return "overview";
     if (c === "state") return "environment";
     if (c === "ai") return "ai";
-    if (c === "ac" || c === "rdd") return "ac";   // RDD 任务链进 AC 分页
+    if (c === "ac") return "ac";
+    if (c === "rdd") return "rdd";                  // 任务链拥有独立页面，不能混入 AC。
     if (c === "expmem") return "ai";             // 经验模块进 AI 分页
     return c;
   }

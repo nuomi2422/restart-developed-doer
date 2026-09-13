@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>RDD Monitoring Station</title>
+  <title>RDD · AI 输入与任务检查</title>
   <link rel="stylesheet" href="css/reset.css?v=2">
   <link rel="stylesheet" href="css/theme.css?v=2">
   <link rel="stylesheet" href="css/monitoring.css?v=2">
@@ -11,18 +11,20 @@
 <body>
   <main class="monitor-shell" id="monitor-shell">
     <header class="monitor-head">
-      <div><div class="brand">RDD MONITORING STATION</div><div class="subtitle">AUI / RDD · Newman · MC</div></div>
-      <div class="connection-strip"><span id="adapter-dot" class="dot ok"></span><span id="adapter-status">Adapter MOCK</span><span id="rdd-dot" class="dot warn"></span><span id="rdd-status">RDD 未接入</span><span id="stream-badge" class="badge warn">WAITING FOR NUMEN</span></div>
+      <div><div class="brand">RDD 监测台</div><div class="subtitle">检查输入 → 任务安排 → 实际执行</div></div>
+      <div class="connection-strip"><span id="adapter-dot" class="dot warn"></span><span id="adapter-status">等待日志</span><span id="rdd-dot" class="dot warn"></span><span id="rdd-status">RDD 未接入</span><span id="stream-badge" class="badge warn">等待连接</span></div>
     </header>
     <nav class="monitor-tabs" id="monitor-tabs" aria-label="监测分页">
-      <button class="active" data-page="overview">总览</button><button data-page="ai">AI / Thinking</button><button data-page="context">Context</button><button data-page="tools">Tools</button><button data-page="ac">AC</button><button data-page="rdd">RDD 任务链</button><button data-page="environment">环境</button><button data-page="health">健康</button><button data-page="intro">介绍</button><button data-page="docs">文档</button>
+      <button class="active" data-page="supervisor">任务链 AI</button><button data-page="taskchain">任务链</button><button data-page="numen">Numen AI</button><button data-page="tools">Numen 工具能力</button><button data-page="ai">历史对话</button><button data-page="context">历史上下文</button><button data-page="health">连接诊断</button><button data-page="intro">项目介绍</button><button data-page="docs">文档</button>
     </nav>
-    <section class="monitor-toolbar"><span id="page-title">总览</span><span class="toolbar-spacer"></span><button id="btn-inject" class="btn" type="button">注入样例事件</button><button id="btn-clear" class="btn" type="button">清空当前页</button></section>
+    <section class="monitor-toolbar"><span id="page-title">任务链 AI</span><span class="toolbar-spacer"></span><label class="font-control" for="font-scale">字号 <select id="font-scale" aria-label="界面字号"><option value="normal">标准</option><option value="large" selected>大</option><option value="xlarge">特大</option></select></label><span>最新优先 · 历史折叠</span></section>
     <section class="monitor-content" id="monitor-content" aria-live="polite"></section>
-    <footer class="watchdog" id="watchdog"><span>看门狗</span><b id="watch-state" class="good">STABLE</b><span>IN <i id="in-rate">0</i>/s</span><span>队列 <i id="queue-depth">0</i>/1000</span><span>丢弃 <i id="dropped">0</i></span><span>最后事件 <i id="last-event">—</i></span></footer>
+    <footer class="watchdog" id="watchdog"><span>观测时效</span><b id="watch-state" class="warn">未连接</b><span>新增 <i id="in-rate">0</i>/秒</span><span>显示记录 <i id="queue-depth">0</i></span><span>窗口淘汰 <i id="dropped">0</i></span><span>最后记录 <i id="last-event">—</i></span></footer>
   </main>
   <script src="js/monitor-store.js?v=2"></script>
-  <script src="js/numen-adapter.js?v=1"></script>
-  <script src="js/monitor-app.js?v=2"></script>
+  <script src="js/numen-adapter.js?v=2"></script>
+  <script src="js/request-view.js?v=2"></script>
+  <script src="js/rdd-view.js?v=4"></script>
+  <script src="js/monitor-app.js?v=4"></script>
 </body>
 </html>

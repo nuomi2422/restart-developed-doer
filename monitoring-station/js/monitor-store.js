@@ -1,11 +1,12 @@
 var MonitorStore = (function () {
-  var pages = { overview: [], ai: [], context: [], tools: [], ac: [], environment: [], health: [], architecture: [], operations: [] };
+  var pages = { overview: [], ai: [], context: [], tools: [], ac: [], rdd: [], environment: [], health: [], architecture: [], operations: [] };
   var current = "overview";
   var dropped = 0;
   var sequence = 0;
   var listeners = [];
   var connection = { connected: false, source: "numen-jsonl" };
   var commandResults = [];
+  var retainedTypes = ['taskchain_snapshot', 'supervisor_input', 'supervisor_context', 'numen_context', 'supervisor_output', 'llm_request', 'llm_response', 'llm_failure'];
   var fixtures = [
     { category: "ai", type: "thinking", text: "RDD 样例：分析下一步阶段", payload: { thinking: "等待真实 RDD 事件" } },
     { category: "context", type: "context_snapshot", text: "Prompt / Context / Tools 快照（样例）", payload: { context: "MOCK" } },
@@ -20,8 +21,22 @@ var MonitorStore = (function () {
     if (!pages[page]) { page = "overview"; dropped++; }
     event.sequence = ++sequence;
     event.timestamp = event.timestamp || new Date().toISOString();
+    if ((page === 'rdd' || page === 'context') && retainedTypes.indexOf(event.type) >= 0) {
+      var owner = (event.payload || {}).companionId || (event.payload || {}).companion_id;
+      if (owner) pages[page] = pages[page].filter(function (old) {
+        var p = old.payload || {};
+        return old.type !== event.type || (p.companionId || p.companion_id) !== owner || p.actor !== (event.payload || {}).actor;
+      });
+    }
     pages[page].push(event);
-    if (pages[page].length > 500) { pages[page].shift(); dropped++; }
+    if (pages[page].length > 500) {
+      var remove = 0;
+      if (page === 'rdd' || page === 'context') {
+        var ordinary = pages[page].findIndex(function (e) { return retainedTypes.indexOf(e.type) < 0; });
+        if (ordinary >= 0) remove = ordinary;
+      }
+      pages[page].splice(remove, 1); dropped++;
+    }
     emit();
   }
   function accept(message) {
@@ -31,10 +46,10 @@ var MonitorStore = (function () {
     else if (message.type === "commandResult") { commandResults.push(message.payload || {}); if (commandResults.length > 100) commandResults.shift(); emit(); }
   }
   function clear() { pages[current] = []; emit(); }
-  function setPage(page) { if (pages[page]) { current = page; emit(); } }
-  function getEvents() { return pages[current].slice(); }
+  function setPage(page) { if (pages[page] || ['supervisor', 'taskchain', 'numen', 'intro', 'docs'].indexOf(page) >= 0) { current = page; emit(); } }
+  function getEvents(page) { return (pages[page || current] || []).slice(); }
   function inject() { var e = fixtures[sequence % fixtures.length]; add({ category: e.category, type: e.type, text: e.text, payload: e.payload, source: "mock" }); }
   function subscribe(listener) { listeners.push(listener); }
-  function stats() { var total = 0; for (var page in pages) total += pages[page].length; return { queue: Math.min(total, 1000), dropped: dropped, sequence: sequence, connected: !!connection.connected, commandResults: commandResults.slice() }; }
-  return { accept: accept, add: add, clear: clear, setPage: setPage, getPage: function () { return current; }, getEvents: getEvents, inject: inject, subscribe: subscribe, stats: stats };
+  function stats() { var total = 0; for (var page in pages) total += pages[page].length; return { queue: total, dropped: dropped, sequence: sequence, connected: !!connection.connected, commandResults: commandResults.slice() }; }
+  return { accept: accept, add: add, clear: clear, setPage: setPage, getPage: function () { return current; }, getEvents: getEvents, inject: inject, subscribe: subscribe, stats: stats, health: function () { return connection; } };
 }());
