@@ -14,7 +14,7 @@ const MAX_TAIL_BYTES = 2 * 1024 * 1024;
 const MAX_EVENTS = 80;
 const MAX_EVENT_DATA_BYTES = 16 * 1024;
 const MIME = { ".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".json": "application/json; charset=utf-8", ".md": "text/markdown; charset=utf-8", ".woff2": "font/woff2", ".ttf": "font/ttf", ".otf": "font/otf" };
-const CATEGORIES = new Set(["events", "state", "tools", "ai", "context", "ac", "environment", "health", "commands", "rdd", "expmem", "selfcompile"]);
+const CATEGORIES = new Set(["rdd"]);
 
 function headers(type) {
   return { "Content-Type": type, "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", "Access-Control-Allow-Origin": "http://127.0.0.1:" + PORT };
@@ -58,13 +58,27 @@ async function readCategory(category) {
   } catch { return []; }
 }
 async function snapshot() {
-  const result = {};
-  let total = 0;
-  for (const category of CATEGORIES) {
-    result[category] = await readCategory(category);
-    total += result[category].length;
+  return taskchainSnapshot();
+}
+
+async function taskchainSnapshot() {
+  const events = (await readCategory("rdd")).filter((event) =>
+    event && event.type === "taskchain_snapshot" && event.data && event.data.taskChain
+  );
+  const latestByCompanion = new Map();
+  for (const event of events) {
+    const owner = event.data.companionId || event.data.companion_id || "unknown";
+    latestByCompanion.set(owner, event);
   }
-  return { ok: true, source: "numen-jsonl", monitorDir: MONITOR_DIR, total, categories: result, timestamp: new Date().toISOString() };
+  const rdd = Array.from(latestByCompanion.values());
+  return {
+    ok: true,
+    source: "rdd-taskchain-jsonl",
+    monitorDir: MONITOR_DIR,
+    total: rdd.length,
+    categories: { rdd },
+    timestamp: new Date().toISOString()
+  };
 }
 
 // ── Numen AI 决策日志解析（latest.log, GBK）────────────────────────────
@@ -164,13 +178,14 @@ const NumenLogParser = (() => {
 const server = createServer(async (request, response) => {
   const url = new URL(request.url, "http://" + HOST + ":" + PORT);
   if (request.method !== "GET") return json(response, 405, { ok: false, error: "GET only" });
+  if (url.pathname === "/api/taskchain") return json(response, 200, await taskchainSnapshot());
   if (url.pathname === "/api/snapshot") return json(response, 200, await snapshot());
   if (url.pathname === "/api/health") {
     const data = await snapshot();
     return json(response, 200, { ok: true, source: data.source, monitorDir: MONITOR_DIR, total: data.total, lastReadAt: data.timestamp });
   }
   if (url.pathname === "/api/numen-log") {
-    return json(response, 200, NumenLogParser.read());
+    return json(response, 410, { ok: false, error: "disabled: taskchain-only data flow" });
   }
   if (url.pathname === "/api/architecture") {
     try {

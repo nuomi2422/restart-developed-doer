@@ -2,7 +2,7 @@
   var titles = { overview: "总览", ai: "历史对话", context: "历史上下文", tools: "Numen 工具能力", ac: "AC", supervisor: "任务链 AI", taskchain: "任务链", numen: "Numen AI", environment: "环境", health: "连接诊断", intro: "项目介绍", docs: "文档" };
   var DOCS = ["INTRO", "ARCHITECTURE", "CONTRACT", "INTERFACES", "REGRESSION", "HANDOFF"];
   var docNames = { INTRO: "项目介绍", ARCHITECTURE: "架构总览", CONTRACT: "模块契约", INTERFACES: "接口清单", REGRESSION: "回归清单", HANDOFF: "交接文档" };
-  var page = "supervisor";
+  var page = "taskchain";
   var content = document.getElementById("monitor-content");
   var title = document.getElementById("page-title");
   var tabs = document.querySelectorAll("#monitor-tabs button");

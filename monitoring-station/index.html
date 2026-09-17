@@ -15,16 +15,16 @@
       <div class="connection-strip"><span id="adapter-dot" class="dot warn"></span><span id="adapter-status">等待日志</span><span id="rdd-dot" class="dot warn"></span><span id="rdd-status">RDD 未接入</span><span id="stream-badge" class="badge warn">等待连接</span></div>
     </header>
     <nav class="monitor-tabs" id="monitor-tabs" aria-label="监测分页">
-      <button class="active" data-page="supervisor">任务链 AI</button><button data-page="taskchain">任务链</button><button data-page="numen">Numen AI</button><button data-page="tools">Numen 工具能力</button><button data-page="ai">历史对话</button><button data-page="context">历史上下文</button><button data-page="health">连接诊断</button><button data-page="intro">项目介绍</button><button data-page="docs">文档</button>
+      <button class="active" data-page="taskchain">任务链</button><button data-page="health">连接诊断</button>
     </nav>
-    <section class="monitor-toolbar"><span id="page-title">任务链 AI</span><span class="toolbar-spacer"></span><label class="font-control" for="font-scale">字号 <select id="font-scale" aria-label="界面字号"><option value="normal">标准</option><option value="large" selected>大</option><option value="xlarge">特大</option></select></label><span>最新优先 · 历史折叠</span></section>
+    <section class="monitor-toolbar"><span id="page-title">任务链</span><span class="toolbar-spacer"></span><label class="font-control" for="font-scale">字号 <select id="font-scale" aria-label="界面字号"><option value="normal">标准</option><option value="large" selected>大</option><option value="xlarge">特大</option></select></label><span>只提取最新任务链快照</span></section>
     <section class="monitor-content" id="monitor-content" aria-live="polite"></section>
     <footer class="watchdog" id="watchdog"><span>观测时效</span><b id="watch-state" class="warn">未连接</b><span>新增 <i id="in-rate">0</i>/秒</span><span>显示记录 <i id="queue-depth">0</i></span><span>窗口淘汰 <i id="dropped">0</i></span><span>最后记录 <i id="last-event">—</i></span></footer>
   </main>
   <script src="js/monitor-store.js?v=2"></script>
-  <script src="js/numen-adapter.js?v=2"></script>
+  <script src="js/numen-adapter.js?v=3"></script>
   <script src="js/request-view.js?v=2"></script>
   <script src="js/rdd-view.js?v=4"></script>
-  <script src="js/monitor-app.js?v=4"></script>
+  <script src="js/monitor-app.js?v=5"></script>
 </body>
 </html>
