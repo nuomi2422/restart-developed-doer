@@ -1,0 +1,8 @@
+{
+  "companion":"RddAudit",
+  "goal":"监测台闭环验证：确认初始持有的智能板材被资产检测识别，不执行移动或采集。",
+  "primary_goal":"读取背包并验证初始资产",
+  "subtask":"确认背包中至少有 1 个 touhou_little_maid:smart_slab_init",
+  "asset_key":"touhou_little_maid:smart_slab_init",
+  "minimum":1
+}

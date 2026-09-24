@@ -51,6 +51,31 @@ enqueue 引导 rdd 用 ac_execute → AI 自主调 ac_execute + ac_status → �
 4. **中文 enqueue 变问号**：MCP 编码，用英文。
 5. **ApricityUI 每 tick NoSuchMethodException**（NbtIo.writeCompressed File 旧签名，MC 1.21.1 改 Path）——第三方 mod bug，游戏存活但刷屏，待修。
 
+## 批次6：Level 2 重试真机验证 + 中文 enqueue 修复 — ✅
+
+**Level 2 重试**（commit `11ca24af`+`7dde7152`）：TaskChain.retrySubtask（FAILED→PENDING）+ RddDetector FAILED 自动重跑（预算 2，nudge 换策略）。真机（下界之星任务）：
+```
+STALLED → nudge① → resumed → STALLED → nudge② → failed → subtask_retry(retry=1)
+```
+
+**中文 enqueue 修复**：根因=PowerShell ANSI 编码；修=Invoke-RestMethod 用 UTF-8 字节。验证 AI 收到中文并响应。
+
+**附带确认**：rdd 背包有 diamond_pickaxe + obsidian——内置 AI 自主做了钻石镐挖到黑曜石（黑曜石任务真完成）。
+
+## 批次7：Level 3 能力不足→自编译引导 — ✅ 触发验证
+
+**实现**（commit）：Level 2 重试耗尽 + 卡死累计（CAPABILITY_GAP_AFTER_STALLS=3）→ `subtask_capability_gap` 事件 + nudge 引导"缺工具调 selfcompile_request"。
+
+**真机**（下界之星任务，AI 反复卡死）：`subtask_capability_gap (repeated stalls 3)` 触发 2 次，AI 收到引导。
+
+**🔴 自主性边界**：AI 收到"缺工具调 selfcompile_request"引导后**未实际调工具**（回复解释/继续尝试）——assist 下引导不能强制 AI 调自编译。完整"AI 触发自编译"闭环需更强触发（如 RDD 直接发起自编译请求）或 AI 配合。
+
+## 批次5：verdict 证据链收紧 — ✅ 实现+测试全绿
+
+**目的**：审查点名最缺口（hasEvents→VERIFIED 太松）。MutationVerification 9 阶段全链才 VERIFIED。
+
+**改动**（commit `2f03eac8`）：MutationVerification（SOURCE_GENERATED/COMPILED/CLASSES/JAR_HASH_RECORDED/DEPLOYED/MC_LOADED/TOOL_REGISTERED/MCP_CALL_SUCCESS/WORLD_EFFECT_VERIFIED，缺任一 FAILED）+ MutationPipeline.verify()。外部 verify.ps1 证据链优先（无 evidence 回退 hasEvents）。
+
 ## 批次4：AssetRegistry populate — ✅ 实现+真机验证
 
 **目的**：spec 里 AssetRegistry 从不 populate（assets 恒 0）的半实现项。

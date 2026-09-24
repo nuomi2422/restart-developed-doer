@@ -1,0 +1,11 @@
+﻿{
+    "harness":  "opencode",
+    "mode":  "readonly",
+    "model":  "opencode/big-pickle",
+    "repo":  "E:\\restart developing doer\\minecraft-numen",
+    "started_at":  "2026-09-12T22:17:50.9727077Z",
+    "finished_at":  "2026-09-12T22:18:01.8235527Z",
+    "exit_code":  0,
+    "task":  "检查 RDD Harness 接入契约：确认 OpenCode 只读职责、输出证据格式和当前仓库分支；不要修改文件。",
+    "output":  "{\"type\":\"step_start\",\"timestamp\":1789251478892,\"sessionID\":\"ses_f684d2c61ffePOJjjH61HDj0xj\",\"part\":{\"id\":\"prt_097b2e565001aH1NLV4iwnJggd\",\"messageID\":\"msg_097b2d71a001Z6Iwb744BVlWiN\",\"sessionID\":\"ses_f684d2c61ffePOJjjH61HDj0xj\",\"snapshot\":\"6f28f842673fdae1b8997d676ec01178749b692c\",\"type\":\"step-start\"}}\r\n{\"type\":\"text\",\"timestamp\":1789251480565,\"sessionID\":\"ses_f684d2c61ffePOJjjH61HDj0xj\",\"part\":{\"id\":\"prt_097b2e982001rboy51rn4BLVrr\",\"messageID\":\"msg_097b2d71a001Z6Iwb744BVlWiN\",\"sessionID\":\"ses_f684d2c61ffePOJjjH61HDj0xj\",\"type\":\"text\",\"text\":\"明白，只读模式：不改文件、不提交、不推送，只执行命令并汇报证据。\\n\\n请告诉我需要调查什么？\",\"time\":{\"start\":1789251479939,\"end\":1789251480558}}}\r\n{\"type\":\"step_finish\",\"timestamp\":1789251481155,\"sessionID\":\"ses_f684d2c61ffePOJjjH61HDj0xj\",\"part\":{\"id\":\"prt_097b2ee100011D2BdW0Mcz5NIH\",\"reason\":\"stop\",\"snapshot\":\"6f28f842673fdae1b8997d676ec01178749b692c\",\"messageID\":\"msg_097b2d71a001Z6Iwb744BVlWiN\",\"sessionID\":\"ses_f684d2c61ffePOJjjH61HDj0xj\",\"type\":\"step-finish\",\"tokens\":{\"total\":9429,\"input\":7497,\"output\":140,\"reasoning\":0,\"cache\":{\"write\":0,\"read\":1792}},\"cost\":0}}\r\n"
+}

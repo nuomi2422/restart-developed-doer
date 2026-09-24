@@ -7,3 +7,13 @@ node_modules/
 # 浏览器/工具临时
 .playwright-mcp/
 *.tmp
+
+# 第三方源码包 / 大体积归档（本仓声明「不包含宿主源码」，不入库）
+*.zip
+
+# 外脑协作原始记录（含本机自动化链路细节，不入公开仓）
+brain-replies/
+global-brain-window.md
+
+# 运行证据与快照（体积大，不入库）
+run-evidence/

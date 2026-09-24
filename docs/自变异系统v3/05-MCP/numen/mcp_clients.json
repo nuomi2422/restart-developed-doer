@@ -1,0 +1,27 @@
+{
+  "enabled": true,
+  "servers": [
+    {
+      "name": "example-http",
+      "type": "http",
+      "url": "http://127.0.0.1:9000/mcp",
+      "headers": {},
+      "enabled": true,
+      "connect_timeout_seconds": 20,
+      "call_timeout_seconds": 120
+    },
+    {
+      "name": "example-stdio",
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-everything"
+      ],
+      "env": {},
+      "enabled": true,
+      "connect_timeout_seconds": 20,
+      "call_timeout_seconds": 120
+    }
+  ]
+}

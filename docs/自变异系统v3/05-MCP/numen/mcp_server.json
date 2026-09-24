@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "host": "127.0.0.1",
+  "port": 8765,
+  "token": "numen-***REDACTED***",
+  "call_timeout_seconds": 300,
+  "hidden_tools": [
+    "todowrite",
+    "load_skill"
+  ],
+  "quiet_fallback": false,
+  "assist": true
+}
