@@ -11,6 +11,17 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /** RddDecomposer.parse 纯容错解析的单测（不触 LLM/网络/MC）。 */
 class RddDecomposerParseTest {
+    @Test void parsesGroupWithoutInventingSingleItemRequirement() {
+        var specs = RddDecomposer.parse("{\"subtasks\":[{\"description\":\"food supply\",\"condition\":{\"group\":\"food\",\"minimum\":16}}]}");
+        assertEquals(1, specs.size());
+        assertEquals("food", specs.getFirst().condition().get("group"));
+        assertFalse(specs.getFirst().condition().containsKey("asset_key"));
+        assertDoesNotThrow(() -> com.dwinovo.numen.rdd.core.RddChainFactory.fromSpec(java.util.UUID.randomUUID(), "food", specs));
+    }
+    @Test void parsesWorldEvidenceAndRejectsFractionalKillThreshold() {
+        assertEquals(1, RddDecomposer.parse("{\"subtasks\":[{\"description\":\"base\",\"condition\":{\"type\":\"base\"}}]}").size());
+        assertTrue(RddDecomposer.parse("{\"subtasks\":[{\"description\":\"dragon\",\"condition\":{\"type\":\"entity_killed\",\"entity\":\"minecraft:ender_dragon\",\"minimum\":1.5}}]}").isEmpty());
+    }
 
     @Test void parsesValidSubtasksWithBody() {
         String json = """
@@ -53,6 +64,21 @@ class RddDecomposerParseTest {
         List<SubtaskSpec> specs = RddDecomposer.parse(json);
         assertEquals(1, specs.size());
         assertEquals("ok", specs.get(0).description());
+    }
+
+    @Test void dropsNonNamespacedAssetKeys() {
+        // "合法 JSON 但结构不可执行"必须被识别为失败：裸键/占位goal/大写 永不匹配背包键 -> 丢弃
+        String json = """
+                {"subtasks":[
+                  {"description":"ok","condition":{"asset_key":"minecraft:oak_log","minimum":1}},
+                  {"description":"bare key","condition":{"asset_key":"iron_ingot","minimum":1}},
+                  {"description":"placeholder","condition":{"asset_key":"goal","minimum":1}},
+                  {"description":"case wrong","condition":{"asset_key":"minecraft:Diamond","minimum":1}}
+                ]}""";
+        List<SubtaskSpec> specs = RddDecomposer.parse(json);
+        assertEquals(1, specs.size());
+        assertEquals("ok", specs.get(0).description());
+        assertEquals("minecraft:oak_log", specs.get(0).condition().get("asset_key"));
     }
 
     @Test void capsAtMaxSubtasks() {

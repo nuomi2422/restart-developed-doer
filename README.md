@@ -7,7 +7,7 @@
 
 ## 📇 改动索引 & 完成状态（先看这里）
 
-- **对宿主改动极小**：144 个改动文件里 **125 个是我们新增的自有代码**，真正改 Numen 原文件的只有 **19 处**（assist 模式 + 观测埋点 + 构建，全部叠加扩展，不动宿主核心语义）。
+- **对宿主改动极小**：280 个改动文件里 **227 个是我们新增的自有代码**，真正改 Numen 已有文件的只有 **44 处**（assist 模式 + 观测埋点 + 构建，全部叠加扩展，不动宿主核心语义）。
 - **完成状态**：监测台 ✅ ｜ AC 执行 ✅ ｜ RDD 任务链 ✅ ｜ Self-Compile ✅ ｜ **expmem ⚠️ 部分完成**（词法检索✅，语义检索依赖外部 BGE embedding + 灵魂核心向量索引，详见下）
 - 完整清单：**[`docs/MODIFICATIONS-INDEX.md`](docs/MODIFICATIONS-INDEX.md)**（索引）｜ **[`MODIFICATIONS.md`](MODIFICATIONS.md)**（逐模块交代）｜ **patch**：[`patches/heartpact-modifications.patch`](patches/heartpact-modifications.patch)
 - 能力评估（诚实自评：极限/天花板/外部评判/提升路线）：**[`docs/CAPABILITY-ASSESSMENT.md`](docs/CAPABILITY-ASSESSMENT.md)**
@@ -21,7 +21,7 @@
 
 - Numen 是**其原作者的开源项目**，本项目**不包含 Numen 原版源码**（需按原项目自行构建部署）；
 - 本项目在 Numen 之上构建**五大模块化系统**，经 `Adapter / Port` 与宿主隔离——未来宿主可替换为任意 AI / 环境执行系统；
-- 本仓库含**本项目自有源码**（`src/`：ac-api/ac-core/rdd-core/experience-core + plugins/*，共 125 Java 文件，依赖 Numen 编译）+ 监测台 + 架构文档 + 编排脚本 + 对宿主的改动 patch。
+- 本仓库含**本项目自有源码**（`src/`：ac-api/ac-core/rdd-core/experience-core + plugins/* 共 206 Java 文件，外加 `src/_host-touch/` 里 18 个住在宿主模块路径下的接缝文件，依赖 Numen 编译）+ 监测台 + 架构文档 + 编排脚本 + 对宿主的改动 patch。
 
 ---
 
@@ -77,7 +77,8 @@
 ## 目录
 
 ```text
-src/                  ★ 五大模块 Java 源码（ac-api/ac-core/rdd-core/experience-core + plugins/*，共 125 文件）
+src/                  ★ 五大模块 Java 源码（ac-api/ac-core/rdd-core/experience-core + plugins/*，共 206 文件）
+  src/_host-touch/      我们写的、但必须住在宿主模块路径下的接缝文件（18 个，非宿主代码）
 monitoring-station/   监测台（含"介绍"分页：项目定位一目了然）
 docs/                 架构决策文档 + 改动索引（MODIFICATIONS-INDEX.md）
 scripts/              外部自编译编排脚本（run-mutation 闭环 / 止损循环等 10 个 .ps1）

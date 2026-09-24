@@ -66,7 +66,11 @@ public final class FileAcVersionStore implements AcVersionStore {
             }
             Path tmp = file.resolveSibling(file.getFileName() + ".tmp");
             Files.writeString(tmp, gson.toJson(root), StandardCharsets.UTF_8);
-            Files.move(tmp, file, StandardCopyOption.REPLACE_EXISTING);
+            try {
+                Files.move(tmp, file, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+            } catch (java.nio.file.AtomicMoveNotSupportedException e) {
+                Files.move(tmp, file, StandardCopyOption.REPLACE_EXISTING);
+            }
         } catch (IOException e) {
             System.err.println("[ac-store] 保存失败: " + e);
         }

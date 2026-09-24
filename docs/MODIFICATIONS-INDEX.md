@@ -1,49 +1,63 @@
 # 改动索引（Modifications Index）
 
 > **一眼看清三件事：我们对宿主改了多少 / 自己写了多少 / 完成到哪一步。**
-> 对应 `patches/heartpact-modifications.patch`（144 文件，base = Numen 原版接入点 `ea38daa1`）。
+> 对应 `patches/heartpact-modifications.patch`（base = Numen 原版接入点 `ea38daa1`）。
+> ⚠️ 该 patch 目前仍是 **2026-08-31** 的版本，尚未跟上后续改动。
 > 详细逐模块交代见 [MODIFICATIONS.md](../MODIFICATIONS.md)。
 
 ---
 
 ## 一句话结论
 
-- **对宿主 [Numen](https://github.com/Dwinovo/minecraft-numen) 改动极小**：144 个改动文件里，
-  **125 个是我们新增的自有代码**，真正修改 Numen 已有文件的只有 **19 个**
-  （集中在 `api/common` 的 assist 协助模式 + 观测埋点 + build 配置）。
+- **对宿主 [Numen](https://github.com/Dwinovo/minecraft-numen) 改动极小**：相对接入点 `ea38daa1` 的
+  280 个改动文件里，**227 个是我们新增的自有代码**，真正修改 Numen 已有文件的只有 **44 个**
+  （assist 协助模式 + 观测埋点 + 工具护栏 + build 配置）。
 - 全部是**叠加扩展**，不修改 Numen 核心语义；经 `Adapter / Port` 与宿主隔离，未来可换宿主。
-- **我们的代码已完整上传**：`src/`（125 Java）+ `monitoring-station/` + `docs/` + `scripts/` + `skills/` + `templates/`。
+- **我们的代码已完整上传**：`src/`（206 Java + `_host-touch/` 18）+ `monitoring-station/` + `docs/` + `scripts/` + `skills/` + `templates/`。
 - 独立仓库 [restart-developed-doer-core](https://github.com/nuomi2422/restart-developed-doer-core) 收录**纯自有代码**（去掉宿主 patch 视角）。
 
 ---
 
-## A. 对宿主 Numen 原文件的改动（19 处，按区域）
+## A. 对宿主 Numen 已有文件的改动（44 个，按区域）
 
-| 区域 | 文件 | 我们改了什么 |
-|---|---|---|
-| **assist 协助模式** | `api/common/.../McpMode.java`、`McpConfig.java`、`McpServer.java` | 驾驶/协助模式分离；MCP enqueue 注入任务给内置 AI |
-| **观测埋点** | `api/common/.../EntityAgentLoop.java`、`ExecuteToolPayload.java`、`CompanionEvent.java`、`NumenActuator.java`、`NumenGateway.java` | AI 上下文 / 工具结果 / 事件写监测台 |
-| **AC 核心缺陷修复** | `ac-api/.../AcDefinition.java`、`ExecutionRecord.java`、`ToolRegistry.java`、`ToolSchema.java`；`ac-core/.../AcExecutor.java`、`AcJson.java`、`DefaultToolRegistry.java` | `Map.copyOf` null-value NPE → `LinkedHashMap`；step 级异常护栏；身份契约 |
-| **回归测试** | `ac-core/test/.../AcExecutorTest.java` | 上述修复的回归用例 |
-| **构建** | `settings.gradle`、`buildSrc/.../api-common.gradle`、`ac-core/build.gradle` | 注册/配置我们的模块 |
+> 口径：相对接入点 `ea38daa1`，`git diff --name-status` 里状态为 `M` 且不属于
+> 自有模块 `ac-api/`、`ac-core/` 的文件。
 
-> 这 19 处全部是**叠加**，改的是边界与埋点，不动 Numen 的 AI 内核语义。
+| 区域 | 数量 | 文件 | 我们改了什么 |
+|---|---|---|---|
+| **assist 协助模式** | 4 | `api/common/.../mcp/server/`：`McpMode` `McpConfig` `McpServer` `McpConfigGuardTest` | 驾驶/协助模式分离；MCP enqueue 注入任务给内置 AI |
+| **观测埋点** | 5 | `EntityAgentLoop` `ExecuteToolPayload` `CompanionEvent` `NumenActuator` `NumenGateway` | AI 上下文 / 工具结果 / 事件写监测台 |
+| **api/common 其他接缝** | 10 | `NumenApi` `NumenPlugins` `NumenEvents` `NumenPlayer` `CompanionStateWatch` `WorkBlockMemory` `ChatCommands` `NumenKeys` `ModLanguageData` `TaskResultPayload` | 插件注册口、事件分发、同伴状态观测、指令与 i18n 挂点 |
+| **ai（LLM 层）** | 3 | `LlmObservation` 挂点相关的 `HttpLlmTransport` `NumenLlmClient` `NumenPrompts` | LLM 请求/响应埋点与提示词扩展 |
+| **core/common 任务链与工具** | 14 | `CoreReflexes` `BreathChain` `MLGChain` `MobDefenseChain` `UnstuckChain` `MineCompanionTask` `InteractAtCompanionTask` `MovementHelper` `BlockActionOps` `CraftOps` `GuiOps` `GetSelfStatusTool` `NumenCore` `ReflexOrderTest` | 逃生链护栏、任务执行口径、工具行为修正（hint 扫描 / GUI 反馈 / 消耗品使用等） |
+| **平台适配** | 2 | `api/fabric/NumenFabricClient` `api/neoforge/NumenNeoForgeClient` | 两端客户端入口接线 |
+| **构建** | 5 | `settings.gradle` `gradle.properties` `buildSrc/api-common.gradle` `buildSrc/numen-plugin.gradle` `core/neoforge/build.gradle` | 注册自有模块、JDK21 钉死、插件构建 |
+| **文档** | 1 | `AC_EXECUTION_LAYER_EXTRACTION.md` | 接入说明补注 |
+
+> 这 44 个全部是**叠加**，改的是边界与埋点，不动 Numen 的 AI 内核语义。
+>
+> 我们**新增**（而非修改）的、住在宿主模块路径下的文件在
+> [`src/_host-touch/`](../src/_host-touch/)（18 个），已在 `src/` 内单列。
 
 ---
 
-## B. 自有代码全量清单（125 个新增 Java 文件，完整上传）
+## B. 自有代码全量清单（206 Java 文件，完整上传）
+
+> 每个模块的数字 = `src/main` + `src/test` 的 Java 文件数。
 
 | 模块 | Java 数 | 定位 | 上传位置 |
 |---|---|---|---|
-| **ac-api** | 12 | AC 执行身份契约 / 事件 / 工具注册 | `src/ac-api/` |
-| **ac-core** | 13 | AC 多步脚本引擎（执行/校验/版本库落盘） | `src/ac-core/` |
-| **rdd-core** | 27 | RDD 任务链：目标分解/卡死监督/持久化/资产检测 | `src/rdd-core/` |
-| **experience-core** | 13 | expmem 经验记忆（learn/recall/verify + 成熟度） | `src/experience-core/` |
-| **plugins/ac** | 14 | AC 工具（ac_execute/status/resume/publish）+ Numen 工具桥 | `src/plugins/ac/` |
-| **plugins/experience** | 6 | 经验工具三件套 | `src/plugins/experience/` |
-| **plugins/rdd** | 8 | RDD 检测/监督/状态/提交 | `src/plugins/rdd/` |
+| **rdd-core** | 66 | RDD 任务链核心：目标分解 / 完成事实 / 失败诊断 / 风险门 / 重规划 / 卡死监督 / 资产口径 | `src/rdd-core/` |
+| **plugins/rdd** | 43 | RDD 的 Numen 适配：检测 / 监督 / 状态 / 提交 / 世界观察 | `src/plugins/rdd/` |
 | **plugins/selfcompile** | 32 | Self-Compile 自变异全套（Mutation* + 证据链 + 生成工具） | `src/plugins/selfcompile/` |
-| **合计** | **125** | — | 全量在 `src/` |
+| **plugins/ac** | 14 | AC 工具（ac_execute/status/resume/publish）+ Numen 工具桥 | `src/plugins/ac/` |
+| **plugins/experience** | 13 | expmem 经验工具三件套 | `src/plugins/experience/` |
+| **ac-core** | 13 | AC 多步脚本引擎（执行/校验/版本库落盘） | `src/ac-core/` |
+| **experience-core** | 13 | expmem 经验记忆（learn/recall/verify + 成熟度） | `src/experience-core/` |
+| **ac-api** | 12 | AC 执行身份契约 / 事件 / 工具注册 | `src/ac-api/` |
+| **小计** | **206** | 独立模块，边界干净（零宿主依赖或只走 Adapter/Port） | `src/` |
+| **`_host-touch`** | **18** | 我们写的、但必须住在宿主模块路径下的接缝文件 | `src/_host-touch/` |
+| **合计** | **224** | — | 全量在 `src/` |
 
 另有非 Java 自有代码：
 - **监测台** `monitoring-station/`：实时观测 AI 思考/工具/任务/经验（含"介绍"分页）

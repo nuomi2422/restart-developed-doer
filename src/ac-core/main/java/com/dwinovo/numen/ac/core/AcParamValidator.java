@@ -71,8 +71,11 @@ public final class AcParamValidator {
     }
 
     private static boolean isInteger(Object v) {
-        if (v instanceof Integer || v instanceof Long) return true;
+        if (v instanceof Integer || v instanceof Long || v instanceof Short || v instanceof Byte) return true;
         if (v instanceof Double d) return d == Math.floor(d) && Double.isFinite(d);
+        if (v instanceof Float f) return f == Math.floor(f) && Float.isFinite(f);
+        if (v instanceof java.math.BigDecimal bd) return bd.stripTrailingZeros().scale() <= 0;
+        if (v instanceof java.math.BigInteger) return true;
         return false;
     }
 

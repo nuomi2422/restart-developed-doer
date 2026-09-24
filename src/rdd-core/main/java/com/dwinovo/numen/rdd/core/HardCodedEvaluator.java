@@ -29,15 +29,20 @@ public final class HardCodedEvaluator {
         if (condition == null || counts == null) {
             return false;
         }
-        Object assetKey = condition.get("asset_key");
-        if (!(assetKey instanceof String key) || key.isBlank()) {
-            return false;
-        }
+        if (condition.containsKey("type") && !"inventory".equals(condition.get("type"))) return false;
         Object minimumObj = condition.get("minimum");
+        if (minimumObj != null && (!(minimumObj instanceof Number n) || !Double.isFinite(n.doubleValue())
+                || n.doubleValue() != n.intValue())) return false;
         int minimum = minimumObj instanceof Number n ? n.intValue() : DEFAULT_MINIMUM;
-        if (minimum < 0) {
-            return false;
+        if (minimum < 0) return false;
+        if (condition.containsKey("group")) {
+            Object group = condition.get("group");
+            return !condition.containsKey("asset_key") && InventoryGroups.known(group) && minimum > 0
+                    && InventoryGroups.count((String) group, counts) >= minimum;
         }
-        return counts.getOrDefault(key, 0) >= minimum;
+        Object assetKey = condition.get("asset_key");
+        if (!(assetKey instanceof String key) || key.isBlank()) return false;
+        Integer count = counts.get(key);
+        return count != null ? Math.max(0, count) >= minimum : minimum == 0;
     }
 }

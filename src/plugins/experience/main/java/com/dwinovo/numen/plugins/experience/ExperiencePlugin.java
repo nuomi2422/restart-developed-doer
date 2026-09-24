@@ -33,6 +33,19 @@ public final class ExperiencePlugin implements NumenPlugin {
         numen.registerTool(new ExperienceLearnTool());
         numen.registerTool(new ExperienceRecallTool());
         numen.registerTool(new ExperienceVerifyTool());
+        // 规划知识：让任务链规划器(Stage-A/Stage-B/回退)真正拿到 guide + builtin + 该同伴经验。
+        // 规划器与本插件互不可见，只能通过这扇宿主门通信；知识只是参考资料，不改任务结构。
+        numen.contributePlanningKnowledge(query -> {
+            try {
+                PlanningKnowledge.Request req = PlanningKnowledge.Request.of(
+                        query.objective(), query.stage(), query.knownFailures());
+                return ExperienceKnowledgeSource.recall(query.companion(), req).text();
+            } catch (Throwable t) {
+                // 知识是可选增强：坏了就这段留空，规划照常（宿主侧还有一层隔离兜底）
+                LOG.warn("[expmem] planning knowledge unavailable: {}", t.toString());
+                return "";
+            }
+        });
         numen.contributeState(companion -> {
             ExperienceMemory m = MEMORIES.get(companion);
             if (m == null) {

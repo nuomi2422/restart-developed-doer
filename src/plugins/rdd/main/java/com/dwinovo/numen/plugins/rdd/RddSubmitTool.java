@@ -29,7 +29,7 @@ final class RddSubmitTool implements NumenTool {
                 .string("subtask", "Current executable subtask description.")
                 .string("asset_key", "Asset key used by the hard-coded observation condition.")
                 .integer("minimum", "Minimum observed count required.", 0, Integer.MAX_VALUE)
-                .optionalString("task_type", "Optional NUMEN body tool to drive (e.g. collect_items / mine_block / move_to).")
+                .optionalString("task_type", "Optional body tool to drive. RDD 词表内(mine/craft/equip_item/collect_items)会被自动翻译参数; 也可指名任意真实注册 NUMEN 工具原样驱动.")
                 .optionalString("args", "Optional JSON object string of body-tool arguments, e.g. {\"item\":\"minecraft:oak_log\",\"count\":5}.")
                 .build();
     }
