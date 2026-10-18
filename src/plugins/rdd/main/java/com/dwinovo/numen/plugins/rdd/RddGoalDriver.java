@@ -164,10 +164,14 @@ final class RddGoalDriver {
             } else {
                 try {
                     List<Subtask> subs = new ArrayList<>(specs.size());
+                    // 2026-09-30 深审 R05/codex：懒展开与重规划**共用**计划代次，
+                    // 否则两套 id 命名（`-sN` / `-r{rev}-N`）可能撞，且回执/指标无法区分来源。
+                    int rev = chain.nextPlanRevision();
                     for (int i = 0; i < specs.size(); i++) {
                         SubtaskSpec sp = specs.get(i);
-                        // id 以当前一级 id 为前缀 → 跨级/跨重试全局唯一，不与已展开一级冲突
-                        subs.add(Subtask.hardCoded(pid + "-s" + i, sp.description(), sp.condition(), sp.body()));
+                        // id 以当前一级 id + 代次为前缀 → 跨级/跨重试/跨重启全局唯一
+                        subs.add(Subtask.hardCoded(pid + "-r" + rev + "-" + i,
+                                sp.description(), sp.condition(), sp.body()));
                     }
                     rt.expandCurrentPrimary(subs); // core 校验：非空/重复/已展开/状态合法
                     ok = true;

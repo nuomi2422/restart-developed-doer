@@ -35,7 +35,10 @@ class RddPlanningPolicyTest {
         List<String> deferred = RddPlanningPolicy.deferredOptional("通关MC");
         assertTrue(deferred.stream().anyMatch(s -> s.contains("书架")), "书架必须默认延后");
         assertTrue(deferred.stream().anyMatch(s -> s.contains("满级")), "满级附魔台必须默认延后");
-        assertTrue(deferred.stream().anyMatch(s -> s.contains("生电")), "生电必须默认延后");
+        // 2026-10-07 用户裁决：村民交易与 AC 自动化是主人路线的一部分，不再默认延后
+        //（旧行为把这两样也挡在计划外，导致"主人路线写进经验也不进计划"）。
+        assertFalse(deferred.stream().anyMatch(s -> s.contains("村民")), "村民交易不再默认延后");
+        assertFalse(deferred.stream().anyMatch(s -> s.contains("自动化")), "自动化（AC 脚本种收/挖铁）不再默认延后");
     }
 
     @Test
@@ -44,7 +47,7 @@ class RddPlanningPolicyTest {
 
         assertTrue(block.contains("最小有效目标"));
         assertTrue(block.contains("书架"), "要显式写出延后了什么，才可审计");
-        assertTrue(block.contains("生电"), "生电要显式列为可选分支");
+        assertTrue(block.contains("生电大工程"), "生电大工程要显式列为门槛项（主人路线点到才做）");
         assertTrue(block.contains("复用现有资产"));
         assertTrue(block.contains("每步可验收"));
         assertFalse(block.contains("已明确要求，允许纳入"), "没要求就不该出现放行语句");
@@ -104,7 +107,7 @@ class RddPlanningPolicyTest {
         assertTrue(request.contains(base), "原规划提示保留");
         assertTrue(request.contains("最小有效目标优先"), "策略约束必须真的进了请求");
         assertTrue(request.contains("可选升级默认延后"));
-        assertTrue(request.contains("生电/自动化/村民体系属可选分支"));
+        assertTrue(request.contains("主人路线点到才做"), "大工程门槛必须真的进了请求");
     }
 
     @Test

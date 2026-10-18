@@ -1,0 +1,63 @@
+{
+  "name": "lure_animals_into_pen",
+  "version": "8",
+  "description": "拿小麦把附近的【羊】引进圈。只挑羊；每趟先走到羊身边，再按【短跳 ×3 → 门外 → 门内】把它一路带到圈心（羊的跟随窗口只有约 8 格，一次走太远它会掉队）；引三趟；卸麦、数圈内羊、先走出圈外、从外面关好栅栏门。",
+  "tags": ["husbandry", "lure", "pen", "sheep"],
+  "planner_notes": "★ v8 相对 v7 的关键修正（2026-10-09 实机）：v7 每趟直接 goto 圈心，而羊在 18-33 格外——MC 里动物跟随玩家的窗口只有约 8 格，走远了羊就停住/掉头（实测 n 一直是 0）。v8 每趟改成【先到羊身边 → 两次短跳（各约 1/3 路程）→ 门外 → 门内】，每段都 ≤8 格，羊跟得住。机制坑仍在：异步步(goto)会 PAUSED 要 resume；步输出不跨暂停保留，只有 set 写的 $var 保留；for/while 里塞异步 goto 会续跑重来，故用线性重复。输入：pen_x/y/z、gate_x/y/z、out_x/y/z（out 用于收尾先出圈）。",
+  "safety_notes": "只走位、换手、右键闸门、只读计数；goto may_alter_terrain=false。",
+  "limits": { "max_steps": 200, "max_timeout_ms": 900000 },
+  "steps": [
+    { "id": "read", "block": "get_self_status", "params": {} },
+    { "id": "save0", "block": "set", "params": { "origin": "$read.position" } },
+    { "id": "hold", "block": "equip_item", "params": { "action": "equip", "item_id": "minecraft:wheat", "slot": "mainhand", "ignore_failure": true } },
+
+    { "id": "scan1", "block": "scan_nearby_entities", "params": { "radius": 24, "type_filter": "passive" } },
+    { "id": "save1", "block": "set", "params": { "e1": "$scan1.entities" } },
+    { "id": "pick1x", "block": "set", "params": { "sx": { "$from": "$var.e1", "$filter": { "field": "type", "op": "==", "value": "entity.minecraft.sheep" }, "$pick": "nearest", "$origin": "$var.origin", "$pick_fields": "position.x,position.y,position.z", "$take": "position.x" } } },
+    { "id": "pick1z", "block": "set", "params": { "sz": { "$from": "$var.e1", "$filter": { "field": "type", "op": "==", "value": "entity.minecraft.sheep" }, "$pick": "nearest", "$origin": "$var.origin", "$pick_fields": "position.x,position.y,position.z", "$take": "position.z" } } },
+    { "id": "approach1", "block": "goto", "params": { "x": "$var.sx", "y": "$input.pen_y", "z": "$var.sz", "may_alter_terrain": false } },
+    { "id": "hop1a", "block": "goto", "params": { "x": { "$calc": "($var.sx * 2 + $input.pen_x) / 3" }, "y": "$input.pen_y", "z": { "$calc": "($var.sz * 2 + $input.pen_z) / 3" }, "may_alter_terrain": false } },
+    { "id": "hop1b", "block": "goto", "params": { "x": { "$calc": "($var.sx + $input.pen_x * 2) / 3" }, "y": "$input.pen_y", "z": { "$calc": "($var.sz + $input.pen_z * 2) / 3" }, "may_alter_terrain": false } },
+    { "id": "gate_out1", "block": "goto", "params": { "x": "$input.out_x", "y": "$input.out_y", "z": "$input.out_z", "may_alter_terrain": false } },
+    { "id": "gate_in1", "block": "goto", "params": { "x": "$input.pen_x", "y": "$input.pen_y", "z": "$input.pen_z", "may_alter_terrain": false } },
+
+    { "id": "scan2", "block": "scan_nearby_entities", "params": { "radius": 24, "type_filter": "passive" } },
+    { "id": "save2", "block": "set", "params": { "e2": "$scan2.entities" } },
+    { "id": "pick2x", "block": "set", "params": { "sx": { "$from": "$var.e2", "$filter": { "field": "type", "op": "==", "value": "entity.minecraft.sheep" }, "$pick": "nearest", "$origin": "$var.origin", "$pick_fields": "position.x,position.y,position.z", "$take": "position.x" } } },
+    { "id": "pick2z", "block": "set", "params": { "sz": { "$from": "$var.e2", "$filter": { "field": "type", "op": "==", "value": "entity.minecraft.sheep" }, "$pick": "nearest", "$origin": "$var.origin", "$pick_fields": "position.x,position.y,position.z", "$take": "position.z" } } },
+    { "id": "approach2", "block": "goto", "params": { "x": "$var.sx", "y": "$input.pen_y", "z": "$var.sz", "may_alter_terrain": false } },
+    { "id": "hop2a", "block": "goto", "params": { "x": { "$calc": "($var.sx * 2 + $input.pen_x) / 3" }, "y": "$input.pen_y", "z": { "$calc": "($var.sz * 2 + $input.pen_z) / 3" }, "may_alter_terrain": false } },
+    { "id": "hop2b", "block": "goto", "params": { "x": { "$calc": "($var.sx + $input.pen_x * 2) / 3" }, "y": "$input.pen_y", "z": { "$calc": "($var.sz + $input.pen_z * 2) / 3" }, "may_alter_terrain": false } },
+    { "id": "gate_out2", "block": "goto", "params": { "x": "$input.out_x", "y": "$input.out_y", "z": "$input.out_z", "may_alter_terrain": false } },
+    { "id": "gate_in2", "block": "goto", "params": { "x": "$input.pen_x", "y": "$input.pen_y", "z": "$input.pen_z", "may_alter_terrain": false } },
+
+    { "id": "scan3", "block": "scan_nearby_entities", "params": { "radius": 24, "type_filter": "passive" } },
+    { "id": "save3", "block": "set", "params": { "e3": "$scan3.entities" } },
+    { "id": "pick3x", "block": "set", "params": { "sx": { "$from": "$var.e3", "$filter": { "field": "type", "op": "==", "value": "entity.minecraft.sheep" }, "$pick": "nearest", "$origin": "$var.origin", "$pick_fields": "position.x,position.y,position.z", "$take": "position.x" } } },
+    { "id": "pick3z", "block": "set", "params": { "sz": { "$from": "$var.e3", "$filter": { "field": "type", "op": "==", "value": "entity.minecraft.sheep" }, "$pick": "nearest", "$origin": "$var.origin", "$pick_fields": "position.x,position.y,position.z", "$take": "position.z" } } },
+    { "id": "approach3", "block": "goto", "params": { "x": "$var.sx", "y": "$input.pen_y", "z": "$var.sz", "may_alter_terrain": false } },
+    { "id": "hop3a", "block": "goto", "params": { "x": { "$calc": "($var.sx * 2 + $input.pen_x) / 3" }, "y": "$input.pen_y", "z": { "$calc": "($var.sz * 2 + $input.pen_z) / 3" }, "may_alter_terrain": false } },
+    { "id": "hop3b", "block": "goto", "params": { "x": { "$calc": "($var.sx + $input.pen_x * 2) / 3" }, "y": "$input.pen_y", "z": { "$calc": "($var.sz + $input.pen_z * 2) / 3" }, "may_alter_terrain": false } },
+    { "id": "gate_out3", "block": "goto", "params": { "x": "$input.out_x", "y": "$input.out_y", "z": "$input.out_z", "may_alter_terrain": false } },
+    { "id": "gate_in3", "block": "goto", "params": { "x": "$input.pen_x", "y": "$input.pen_y", "z": "$input.pen_z", "may_alter_terrain": false } },
+
+    { "id": "drop", "block": "equip_item", "params": { "action": "unequip", "slot": "mainhand", "ignore_failure": true } },
+
+    { "id": "cnt", "block": "count_entities_in_box", "params": {
+        "x1": { "$calc": "$input.pen_x - 2" }, "y1": { "$calc": "$input.pen_y - 1" }, "z1": { "$calc": "$input.pen_z - 2" },
+        "x2": { "$calc": "$input.pen_x + 2" }, "y2": { "$calc": "$input.pen_y + 1" }, "z2": { "$calc": "$input.pen_z + 2" },
+        "type_id": "minecraft:sheep" } },
+    { "id": "saven", "block": "set", "params": { "n": "$cnt.count" } },
+
+    { "id": "leave", "block": "goto", "params": { "x": "$input.out_x", "y": "$input.out_y", "z": "$input.out_z", "may_alter_terrain": false } },
+
+    { "id": "gate", "block": "inspect_block", "params": { "x": "$input.gate_x", "y": "$input.gate_y", "z": "$input.gate_z" } },
+    { "id": "saveg", "block": "set", "params": { "gateopen": "$gate.properties.open" } },
+    { "id": "close_gate", "block": "if", "params": { "condition": { "field": "$var.gateopen", "op": "==", "value": "true" } }, "children": [
+        { "id": "shut", "block": "interact_at", "params": { "button": "right", "x": "$input.gate_x", "y": "$input.gate_y", "z": "$input.gate_z", "ignore_failure": true } }
+    ] },
+
+    { "id": "enough", "block": "guard", "params": { "condition": { "field": "$var.n", "op": ">=", "value": 2 }, "message": "圈内只引到 $var.n 只羊（<2）；门已关好，可再引一趟", "on_fail": "fail" } },
+    { "id": "done", "block": "get_self_status", "params": {} }
+  ]
+}

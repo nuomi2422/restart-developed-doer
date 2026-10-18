@@ -40,4 +40,27 @@ class RiskGateTest {
         assertEquals(RiskLevel.MINING, RiskGate.levelForText("下矿采集钻石"));
         assertEquals(RiskLevel.NORMAL, RiskGate.levelForText("做石镐"));
     }
+
+    /** §6③：高风险活动需恢复点（已绑床）；没恢复点即使物资够也阻止。 */
+    @Test void highRiskRequiresRecoveryPoint() {
+        var ok = Map.of(
+                "minecraft:diamond_helmet", 2, "minecraft:diamond_chestplate", 2,
+                "minecraft:diamond_leggings", 2, "minecraft:diamond_boots", 2,
+                "minecraft:fire_resistance_potion", 3, "minecraft:torch", 16,
+                "minecraft:cooked_beef", 16);
+        var noRecovery = RiskGate.checkWithRecovery(RiskLevel.NETHER, ok, false);
+        assertFalse(noRecovery.allowed(), "物资够但没恢复点 → 阻止");
+        assertTrue(noRecovery.missing().stream().anyMatch(s -> s.contains("recovery_point")));
+        assertTrue(noRecovery.prepTasks().stream().anyMatch(s -> s.contains("绑定重生点") || s.contains("床")));
+
+        var withRecovery = RiskGate.checkWithRecovery(RiskLevel.NETHER, ok, true);
+        assertTrue(withRecovery.allowed(), "物资够 + 有恢复点 → 允许");
+    }
+
+    @Test void recoveryPointNotRequiredForNormalOrMining() {
+        assertTrue(RiskGate.checkWithRecovery(RiskLevel.NORMAL, Map.of(), false).allowed());
+        assertTrue(RiskGate.checkWithRecovery(RiskLevel.MINING,
+                Map.of("minecraft:torch", 16, "minecraft:bread", 4), false).allowed(),
+                "下矿不强制恢复点");
+    }
 }

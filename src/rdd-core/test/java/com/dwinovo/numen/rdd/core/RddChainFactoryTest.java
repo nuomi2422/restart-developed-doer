@@ -38,7 +38,10 @@ class RddChainFactoryTest {
     @Test void capsObjectiveLength() {
         String huge = "x".repeat(5000);
         Goal goal = RddChainFactory.fromObjective(CID, huge);
-        assertEquals(RddChainFactory.MAX_OBJECTIVE_CHARS, goal.description().length());
+        // ★ 4000 是字面量，刻意不写 RddChainFactory.MAX_OBJECTIVE_CHARS。
+        //   变异测试实测：写成常量时把上限改成 6000 本测试【不会红】——
+        //   期望值和被测值一起变，断言成了「目标被裁到它自己的上限」而不是「上限是 4000」。
+        assertEquals(4000, goal.description().length());
     }
 
     @Test void fromSpecBuildsMultiSubtaskChain() {

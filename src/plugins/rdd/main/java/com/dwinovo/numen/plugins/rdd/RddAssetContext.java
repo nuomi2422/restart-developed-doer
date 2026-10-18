@@ -25,16 +25,22 @@ final class RddAssetContext {
         if (maxChars < 64) return "";
         List<AssetRegistry.AssetEntry> assets = worldAssets(registry);
         if (assets.isEmpty()) return "";
+        Map<String, com.dwinovo.numen.rdd.core.AssetClaim> claims =
+                com.dwinovo.numen.rdd.core.PlanningAssetSnapshot.worldClaims(registry);
         StringBuilder out = new StringBuilder("<known_world_assets>\n");
         out.append("Last observed reusable world assets. LAZY entries are leads; re-check before relying on them.\n");
         for (var entry : assets) {
             Map<String, Object> value = entry.observation().value();
+            com.dwinovo.numen.rdd.core.AssetClaim claim = claims.get(entry.assetId());
+            String claimMeta = claim == null ? ""
+                    : " source=" + claim.source() + " verified_at=" + claim.verifiedAtMillis();
             String line = "- kind=" + text(value.get("kind"))
                     + " label=" + text(value.getOrDefault("label", entry.assetId()))
                     + " dimension=" + text(value.get("dimension"))
                     + " pos=" + text(value.get("x")) + "," + text(value.get("y")) + "," + text(value.get("z"))
                     + " refresh=" + text(value.getOrDefault("refresh_policy", "LAZY"))
                     + " status=" + entry.status()
+                    + claimMeta
                     + details(value) + "\n";
             if (out.length() + line.length() + 22 > maxChars) break;
             out.append(line);

@@ -1,0 +1,68 @@
+{
+  "name": "inventory_if",
+  "version": "1",
+  "description": "读背包，按有没有钻石镐走两条 if 分支，演示分支选择与点路径取物品数。",
+  "tags": [
+    "demo",
+    "if"
+  ],
+  "planner_notes": "$inv.items.minecraft:diamond_pickaxe 是 Map 里的带命名空间 key，点路径能取到。",
+  "safety_notes": "只读 + set_timer 只登记提醒，不占身体。",
+  "steps": [
+    {
+      "id": "inv",
+      "block": "rdd_get_inventory",
+      "params": {}
+    },
+    {
+      "id": "branch",
+      "block": "if",
+      "params": {},
+      "children": [
+        {
+          "id": "has_pickaxe",
+          "block": "if",
+          "params": {
+            "condition": {
+              "field": "$inv.items.minecraft:diamond_pickaxe",
+              "op": ">=",
+              "value": 1
+            },
+            "message": "有镐"
+          },
+          "children": [
+            {
+              "id": "recipe",
+              "block": "lookup_recipe",
+              "params": {
+                "item_id": "minecraft:iron_pickaxe"
+              }
+            }
+          ]
+        },
+        {
+          "id": "no_pickaxe",
+          "block": "if",
+          "params": {
+            "condition": {
+              "field": "$inv.items.minecraft:diamond_pickaxe",
+              "op": "<",
+              "value": 1
+            },
+            "message": "没镐"
+          },
+          "children": [
+            {
+              "id": "note",
+              "block": "set_timer",
+              "params": {
+                "after_s": 1,
+                "reason": "no diamond pickaxe in backpack"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

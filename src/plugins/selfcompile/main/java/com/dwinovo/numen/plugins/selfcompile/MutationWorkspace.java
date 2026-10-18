@@ -21,6 +21,15 @@ public final class MutationWorkspace {
     }
 
     public MutationManifest create(String requirement) throws IOException {
+        return create(requirement, MutationState.WORKSPACE_CREATED);
+    }
+
+    /** P5：只登记提案并建工作区，初始状态 PROPOSED（等待审批，不进入执行）。 */
+    public MutationManifest propose(String requirement) throws IOException {
+        return create(requirement, MutationState.PROPOSED);
+    }
+
+    private MutationManifest create(String requirement, MutationState initialState) throws IOException {
         if (requirement == null || requirement.isBlank()) {
             throw new IllegalArgumentException("requirement must not be blank");
         }
@@ -36,7 +45,7 @@ public final class MutationWorkspace {
         Files.createDirectories(workspace.resolve("reports"));
 
         MutationManifest manifest = new MutationManifest(id, requirement,
-                MutationState.WORKSPACE_CREATED, 0, Instant.now(),
+                initialState, 0, Instant.now(),
                 workspace.toString(), "", "");
         writeManifest(workspace, manifest);
         return manifest;

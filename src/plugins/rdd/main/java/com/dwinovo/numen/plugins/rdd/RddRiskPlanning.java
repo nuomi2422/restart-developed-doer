@@ -48,7 +48,12 @@ final class RddRiskPlanning {
             sb.append("当前缺口：").append(String.join("; ", missing)).append("\n");
         }
         sb.append("请把这些准备安排在该风险阶段**之前**的独立阶段（或该阶段开头）**提前完成**，"
-                + "不要等到了现场才临时准备；下界/末地还需临时据点/回退路线与相应药水。\n\n");
+                + "不要等到了现场才临时准备；下界/末地还需临时据点/回退路线与相应药水。\n");
+        if (level == RiskLevel.NETHER || level == RiskLevel.END) {
+            sb.append("【恢复点】进下界/末地前必须已有可用床并绑定为重生点（interact_at 右键床即绑）——"
+                    + "没有恢复点就进高风险维度，死亡即从零。\n");
+        }
+        sb.append("\n");
         return sb.toString();
     }
 
@@ -61,8 +66,18 @@ final class RddRiskPlanning {
             return stages == null ? List.of() : stages;
         }
         List<PrimarySpec> out = new ArrayList<>(stages.size());
+        int index = 0;
         for (PrimarySpec stage : stages) {
+            // 第一个一级目标从零起步，绝不给它加跨级前置硬门——否则"就地挖石头/采集木头"
+            // 这类描述被判 MINING 后会要求 torch/bread，而该阶段本身正是产出它们的阶段 → 自锁死等。
+            // （真机验证抓到：primary-0 waitFor=bread4+torch16 → 永久 WAITING。）
+            boolean isFirstStage = (index == 0);
+            index++;
             if (stage == null) {
+                continue;
+            }
+            if (isFirstStage) {
+                out.add(stage);
                 continue;
             }
             RiskLevel level = RiskGate.levelForText(stage.description());
@@ -77,6 +92,10 @@ final class RddRiskPlanning {
             }
             for (Map.Entry<String, Integer> e : required.entrySet()) {
                 merged.merge(e.getKey(), e.getValue(), Math::max);
+            }
+            // §6③ 恢复点：下界/末地阶段追加"床"作为硬门（携带即视为有恢复点能力的保守代理）。
+            if (level == RiskLevel.NETHER || level == RiskLevel.END) {
+                merged.merge("minecraft:white_bed", 1, Math::max);
             }
             List<AssetRequirement> wf = new ArrayList<>();
             for (Map.Entry<String, Integer> e : merged.entrySet()) {

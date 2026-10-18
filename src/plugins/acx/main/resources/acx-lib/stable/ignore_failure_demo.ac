@@ -1,0 +1,32 @@
+{
+  "name": "ignore_failure_demo",
+  "version": "1",
+  "description": "合成一个不存在的物品 → 失败被容错吞掉 → 仍走完最后一步（终态 SUCCESS，失败原因留在输出里）。",
+  "tags": [
+    "demo",
+    "ignore_failure"
+  ],
+  "planner_notes": "ignore_failure 在 params 里；容错走的是「合并诊断」不是「替换输出」，所以 while 的退出条件不会被抹掉。",
+  "safety_notes": "不会真的消耗材料。",
+  "steps": [
+    {
+      "id": "read",
+      "block": "get_self_status",
+      "params": {}
+    },
+    {
+      "id": "maybe_craft",
+      "block": "craft",
+      "params": {
+        "item_id": "minecraft:not_a_real_item_zzz",
+        "count": 1,
+        "ignore_failure": true
+      }
+    },
+    {
+      "id": "read2",
+      "block": "get_self_status",
+      "params": {}
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+modLoader = "javafml"
+loaderVersion = "${neoforge_loader_version_range}"
+license = "${license}"
+
+[[mods]]
+modId = "worldstate"
+version = "${version}"
+displayName = "World State Plugin"
+authors = "dwinovo"
+description = '''World observation module: unified collection of world facts, timestamped observation store, and read/refresh query service. Read never scans; refresh is explicit; every result carries time, coverage and failure reason.'''
+
+[[dependencies.worldstate]]
+modId = "numen_api"
+type = "required"
+versionRange = "[0.0,)"
+ordering = "AFTER"
+side = "BOTH"
+
+[[dependencies.worldstate]]
+modId = "neoforge"
+type = "required"
+versionRange = "[${neoforge_version},)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.worldstate]]
+modId = "minecraft"
+type = "required"
+versionRange = "${minecraft_version_range}"
+ordering = "NONE"
+side = "BOTH"

@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.dwinovo.numen.plugins.camera.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [],
+  "client": [
+    "MixinCamera"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

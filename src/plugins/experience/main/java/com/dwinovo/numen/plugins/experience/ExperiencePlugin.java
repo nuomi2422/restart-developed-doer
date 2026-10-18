@@ -2,9 +2,10 @@ package com.dwinovo.numen.plugins.experience;
 
 import com.dwinovo.numen.api.NumenApi;
 import com.dwinovo.numen.api.NumenPlugin;
+import com.dwinovo.numen.experience.core.ExperienceDirectory;
 import com.dwinovo.numen.experience.core.ExperienceMemory;
-import com.dwinovo.numen.experience.core.ExperienceStats;
 import com.dwinovo.numen.experience.core.LexicalExperienceRetriever;
+import com.dwinovo.numen.experience.core.PresentationReceipt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,6 +34,7 @@ public final class ExperiencePlugin implements NumenPlugin {
         numen.registerTool(new ExperienceLearnTool());
         numen.registerTool(new ExperienceRecallTool());
         numen.registerTool(new ExperienceVerifyTool());
+        numen.registerTool(new ExperienceRetractTool());
         // 规划知识：让任务链规划器(Stage-A/Stage-B/回退)真正拿到 guide + builtin + 该同伴经验。
         // 规划器与本插件互不可见，只能通过这扇宿主门通信；知识只是参考资料，不改任务结构。
         numen.contributePlanningKnowledge(query -> {
@@ -51,13 +53,28 @@ public final class ExperiencePlugin implements NumenPlugin {
             if (m == null) {
                 return "";
             }
-            ExperienceStats s = m.stats();
-            if (s.total() == 0) {
+            try {
+                // ★ E6：不再是「只有三个计数」，而是 L0 目录层（59 号 §8.1）。
+                // contributeState 只拿得到同伴 UUID —— 拿不到当前任务，所以这里排的是
+                // 「可信度兜底序」（经验库 recall("", …) 的 fallbackScore 路径：
+                // 成熟度 × 优先级 × 近期性），**不是**按当前任务筛的；
+                // 块里的 <note> 明说了这一点，别让 AI 把顺序读成相关性。
+                // ★ E7：reportable=false —— 目录是每轮自动印的，同伴很可能压根没看；
+                //   让它进待回报清单会产出满屏「本任务没有结论」的噪音。
+                //   它仍然计入「被呈现过几次」那个长期读数。
+                ExperienceDirectory.Block block = ExperienceDirectory.render(
+                        m.recall("", ExperienceDirectory.DEFAULT_MAX_ROWS, null, java.util.List.of(),
+                                PresentationReceipt.SURFACE_DIRECTORY, false),
+                        m.size(), m.stats().verified(), m.stats().generalized(),
+                        m.loadStats(), m.stats(),
+                        ExperienceDirectory.DEFAULT_MAX_ROWS,
+                        ExperienceDirectory.DEFAULT_MAX_CHARS);
+                return block.text();
+            } catch (Throwable t) {
+                // 目录是可选增强：坏了就这段留空，每轮上下文照常
+                LOG.warn("[expmem] experience directory unavailable: {}", t.toString());
                 return "";
             }
-            return "<experience><total>" + s.total() + "</total>"
-                    + "<verified>" + s.verified() + "</verified>"
-                    + "<generalized>" + s.generalized() + "</generalized></experience>";
         });
         LOG.info("[expmem] experience memory plugin ready");
     }
@@ -72,5 +89,17 @@ public final class ExperiencePlugin implements NumenPlugin {
                 uuid -> ExperienceMemory.at(
                         dir.resolve("experience-" + uuid + ".jsonl"),
                         new LexicalExperienceRetriever()));
+    }
+
+    /**
+     * {@code config/numen/} 目录；未 setup 时为 null。
+     *
+     * <p><b>E7：{@code ExperienceVerifyTool} 只读列待回报清单时要读
+     * {@code monitor/events.jsonl}（任务收尾结果）来给每条呈现配上判据，
+     * 那是纯只读旁路，不经过 {@link #memory}。</b>返 null 而不是抛异常：
+     * 读不到结果源时如实报「读不到」，不该让整个工具挂掉。</p>
+     */
+    static Path configDir() {
+        return configDir;
     }
 }

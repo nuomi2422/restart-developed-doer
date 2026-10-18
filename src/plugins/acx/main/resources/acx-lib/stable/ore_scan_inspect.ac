@@ -1,0 +1,84 @@
+{
+  "name": "ore_scan_inspect",
+  "version": "1",
+  "description": "扫半径 24 的铁矿，用参数映射链取最近那一块的坐标，再 inspect_block 复核方块信息。",
+  "tags": [
+    "mining",
+    "demo",
+    "binder"
+  ],
+  "planner_notes": "演示 scan_blocks 的真形状是 {matches:[...]}，取坐标必须走 $filter+$pick nearest+$take，不能写 DD 那种 $scan.target_absX。",
+  "safety_notes": "只读脚本：不移动、不挖掘、不放置。",
+  "steps": [
+    {
+      "id": "read",
+      "block": "get_self_status",
+      "params": {}
+    },
+    {
+      "id": "scan",
+      "block": "scan_blocks",
+      "params": {
+        "block_ids": [
+          "minecraft:iron_ore"
+        ],
+        "radius": 24
+      }
+    },
+    {
+      "id": "has_ore",
+      "block": "guard",
+      "params": {
+        "condition": {
+          "field": "$scan.matches.0.block",
+          "op": "==",
+          "value": "minecraft:iron_ore"
+        },
+        "message": "半径 24 内没扫到铁矿",
+        "hint": "换矿种（minecraft:gold_ore / diamond_ore）或加大 radius"
+      }
+    },
+    {
+      "id": "inspect",
+      "block": "inspect_block",
+      "params": {
+        "x": {
+          "$from": "$scan.matches",
+          "$filter": {
+            "field": "block",
+            "op": "==",
+            "value": "minecraft:iron_ore"
+          },
+          "$pick": "nearest",
+          "$origin": "$read.position",
+          "$take": "x",
+          "$as": "int"
+        },
+        "y": {
+          "$from": "$scan.matches",
+          "$filter": {
+            "field": "block",
+            "op": "==",
+            "value": "minecraft:iron_ore"
+          },
+          "$pick": "nearest",
+          "$origin": "$read.position",
+          "$take": "y",
+          "$as": "int"
+        },
+        "z": {
+          "$from": "$scan.matches",
+          "$filter": {
+            "field": "block",
+            "op": "==",
+            "value": "minecraft:iron_ore"
+          },
+          "$pick": "nearest",
+          "$origin": "$read.position",
+          "$take": "z",
+          "$as": "int"
+        }
+      }
+    }
+  ]
+}

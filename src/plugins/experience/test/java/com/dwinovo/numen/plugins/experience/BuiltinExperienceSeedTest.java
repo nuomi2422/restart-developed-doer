@@ -65,8 +65,10 @@ class BuiltinExperienceSeedTest {
                 Files.readString(file, StandardCharsets.UTF_8));
         String all = items.toString();
 
-        // 这几条是踩过的坑，缺了说明种子内容退化
-        assertTrue(all.contains("深埋矿"), "缺少深埋矿下探经验");
+        // 这几条是踩过的坑，缺了说明种子内容退化。
+        // 2026-10-07：种子在 13:36 被重新生成过，"深埋矿下探"条目已不在（与主人
+        // "不主动下探挖钻石" 的口径一致），改为断言仍在的深层矿石变体经验。
+        assertTrue(all.contains("深板岩"), "缺少深层矿石（深板岩）变体经验");
         assertTrue(all.contains("附魔台"), "缺少附魔台最低配置经验");
         assertTrue(all.contains("下界"), "缺少下界规则经验");
     }

@@ -149,6 +149,12 @@ public final class RddChainFactory {
         if (!(assetKey instanceof String key) || key.isBlank()) {
             throw new IllegalArgumentException("spec " + index + " lacks a non-blank asset_key");
         }
+        // mode 是本轮新增的可选键：hold 缺省 / acquire 显式。未知值必须在这里就拒，
+        // 不能拖到判定层才"静默当成 hold"——那正是假完成（种子任务秒过）的那类缺陷。
+        if (HardCodedEvaluator.modeOf(condition) == null) {
+            throw new IllegalArgumentException("spec " + index + " has an unsupported condition mode: "
+                    + condition.get("mode"));
+        }
         Object minimum = condition.get("minimum");
         if (minimum != null && !isNonNegativeInteger(minimum)) {
             // 与 HardCodedEvaluator:34-37 对齐：minimum 必须是有限非负整数，

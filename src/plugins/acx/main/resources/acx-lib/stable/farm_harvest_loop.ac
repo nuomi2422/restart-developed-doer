@@ -1,0 +1,43 @@
+{
+  "name": "farm_harvest_loop",
+  "version": "8",
+  "description": "种田：一次 farm_nearby 把身边一片田的成熟作物全部【收 + 原地留苗】(收=产物进背包+age复位，不拆块不耗种子)，再 collect_items 捡起掉落的零星物品。",
+  "tags": [
+    "farming",
+    "harvest",
+    "replant",
+    "atomic"
+  ],
+  "planner_notes": "不做“逐株 for + goto”循环：ACX 的 for 循环体里只要含异步步(goto)，暂停 resume 后会从第0项重来，永远出不去第一株（2026-10-08 实机）。所以整片处理收进单个同步工具 farm_nearby。它与 farm_cell 同源：成熟作物→产物进背包+age设回0，原地留苗，不耗种子。只碰成熟作物。",
+  "safety_notes": "只碰成熟作物，空格/嫩苗不动；不改地形。",
+  "limits": {
+    "max_steps": 60,
+    "max_timeout_ms": 600000
+  },
+  "steps": [
+    {
+      "id": "read",
+      "block": "get_self_status",
+      "params": {}
+    },
+    {
+      "id": "tend",
+      "block": "farm_nearby",
+      "params": {
+        "radius": 24
+      }
+    },
+    {
+      "id": "pickup",
+      "block": "collect_items",
+      "params": {
+        "radius": 16
+      }
+    },
+    {
+      "id": "done",
+      "block": "get_self_status",
+      "params": {}
+    }
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "name": "mine_smelt_craft_iron_pickaxe",
+  "description": "完整铁镐流水线：查前置→扫描铁矿→导航→挖掘→拾取→熔炼→合成铁镐。DD 同名脚本有 3 处字段引用写错（见 planner_notes），本版已按实测输出字段改正。",
+  "tags": ["mining", "iron", "crafting", "tools"],
+  "planner_notes": "DD 原版 mine_smelt_craft_iron_pickaxe.ac 的 3 处 $prev 引用全部指向不存在的字段：$prev.target_position（scan_blocks 没有，只有 target_absX/Y/Z）、$prev.block_type（navigate_to 没有）、$prev.item（mine_block 没有）。DD 加载器只 WARN，然后执行器把字面串 \"$prev.block_type\" 当方块名喂给 MineBlockAction。本版改为：nav 用 $prev.target_absX/Y/Z（scan_blocks 真实字段）、mine 用 $scan.target_block（真实字段）、熔炼数量走 $input.count（外部输入，静态不可校验，故跳过校验）。",
+  "safety_notes": "check_inventory 查不到镐就 give_pickaxe；mining 失败不吞（真断点，值得 PAUSED 后人工/AI 介入）；熔炼 count 由 $input.count 给，缺省 1。",
+  "steps": [
+    {
+      "id": "precheck",
+      "block": "check_inventory",
+      "params": { "check": "pickaxe" }
+    },
+    {
+      "id": "ensure_pick",
+      "block": "if",
+      "params": {
+        "condition": { "field": "$precheck.found", "op": "==", "value": false }
+      },
+      "children": [
+        {
+          "id": "give",
+          "block": "give_pickaxe",
+          "params": {}
+        }
+      ]
+    },
+    {
+      "id": "scan",
+      "block": "scan_blocks",
+      "params": { "target": "iron_ore", "radius": 48, "min_count": 1 }
+    },
+    {
+      "id": "nav",
+      "block": "navigate_to",
+      "params": {
+        "x": "$prev.target_absX",
+        "y": "$prev.target_absY",
+        "z": "$prev.target_absZ",
+        "relative": false,
+        "wait_reach": true
+      }
+    },
+    {
+      "id": "mine",
+      "block": "mine_block",
+      "params": { "block": "$scan.target_block" }
+    },
+    {
+      "id": "pick",
+      "block": "pickup_items",
+      "params": { "radius": 8 }
+    },
+    {
+      "id": "smelt",
+      "block": "smelt_batch",
+      "params": { "input": "raw_iron", "count": "$input.count" }
+    },
+    {
+      "id": "craft",
+      "block": "craft_item",
+      "params": { "count": 1 }
+    }
+  ]
+}

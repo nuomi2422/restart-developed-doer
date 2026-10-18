@@ -1,0 +1,49 @@
+{
+  "name": "hp_guard_goto",
+  "version": "1",
+  "description": "血量低于阈值时 guard 拦下（PAUSED）；resume 换 input 给一个过得去的 min_hp 就能放行。",
+  "tags": [
+    "guard",
+    "async",
+    "demo"
+  ],
+  "planner_notes": "示范「门是可以被外部改判的」：$input.min_hp 参与条件，resume 传新 input 即改判。",
+  "safety_notes": "may_alter_terrain=false，只走不平整地形。",
+  "steps": [
+    {
+      "id": "read",
+      "block": "get_self_status",
+      "params": {}
+    },
+    {
+      "id": "min_hp_gate",
+      "block": "guard",
+      "params": {
+        "message": "门槛高于当前血量",
+        "hint": "acx_resume 传更小的 min_hp",
+        "conditions": [
+          {
+            "field": "$read.hp",
+            "op": ">=",
+            "value": "$input.min_hp"
+          }
+        ]
+      }
+    },
+    {
+      "id": "move",
+      "block": "goto",
+      "params": {
+        "x": "$read.position.x",
+        "y": "$read.position.y",
+        "z": "$read.position.z",
+        "may_alter_terrain": false
+      }
+    },
+    {
+      "id": "read2",
+      "block": "get_self_status",
+      "params": {}
+    }
+  ]
+}

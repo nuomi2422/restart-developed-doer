@@ -1,0 +1,120 @@
+{
+  "name": "mine_nearest_ore",
+  "version": "1",
+  "description": "可见演示：扫 16 格内的铁矿 → 自动挑离自己最近的那块 → 走过去 → 挖 1 个。全程零算术（坐标直接取扫描结果）。",
+  "tags": [
+    "mining",
+    "demo",
+    "visible"
+  ],
+  "planner_notes": "$origin 取上一步 get_self_status 的 position（3D 欧氏距离）；$pick nearest 选最近；$take 把元素对象投影成 x/y/z 三个标量；$as int 转型给 goto。",
+  "safety_notes": "may_alter_terrain=true 允许为了到矿点开路（会在地下挖通道）；血量低于 10 时 guard 拦下，不硬挖。",
+  "limits": {
+    "max_timeout_ms": 120000,
+    "max_steps": 400
+  },
+  "steps": [
+    {
+      "id": "read",
+      "block": "get_self_status",
+      "params": {},
+      "comment": "只为拿到自己的位置当最近基准"
+    },
+    {
+      "id": "hp_gate",
+      "block": "guard",
+      "params": {
+        "conditions": [
+          {
+            "field": "$read.hp",
+            "op": ">=",
+            "value": 10
+          }
+        ],
+        "message": "血量低于 10，不进矿",
+        "hint": "回血后用 acx_resume 换 input 继续"
+      }
+    },
+    {
+      "id": "scan",
+      "block": "scan_blocks",
+      "params": {
+        "block_ids": [
+          "minecraft:iron_ore"
+        ],
+        "radius": 16
+      },
+      "comment": "真机形状：输出是 matches[{x,y,z,block,distance}]，不是 DD 的扁平字段"
+    },
+    {
+      "id": "has_ore",
+      "block": "guard",
+      "params": {
+        "conditions": [
+          {
+            "field": "$scan.matches.0.block",
+            "op": "==",
+            "value": "minecraft:iron_ore"
+          }
+        ],
+        "message": "16 格内没扫到铁矿",
+        "hint": "换 radius 或换矿种（diamond_ore / gold_ore）"
+      }
+    },
+    {
+      "id": "move",
+      "block": "goto",
+      "params": {
+        "x": {
+          "$from": "$scan.matches",
+          "$filter": {
+            "field": "block",
+            "op": "==",
+            "value": "minecraft:iron_ore"
+          },
+          "$pick": "nearest",
+          "$origin": "$read.position",
+          "$take": "x",
+          "$as": "int"
+        },
+        "y": {
+          "$from": "$scan.matches",
+          "$filter": {
+            "field": "block",
+            "op": "==",
+            "value": "minecraft:iron_ore"
+          },
+          "$pick": "nearest",
+          "$origin": "$read.position",
+          "$take": "y",
+          "$as": "int"
+        },
+        "z": {
+          "$from": "$scan.matches",
+          "$filter": {
+            "field": "block",
+            "op": "==",
+            "value": "minecraft:iron_ore"
+          },
+          "$pick": "nearest",
+          "$origin": "$read.position",
+          "$take": "z",
+          "$as": "int"
+        },
+        "block": "minecraft:iron_ore",
+        "may_alter_terrain": true
+      },
+      "comment": "受理即 PAUSED 是正常语义：真在走过去"
+    },
+    {
+      "id": "dig",
+      "block": "mine",
+      "params": {
+        "block_ids": [
+          "minecraft:iron_ore"
+        ],
+        "count": 1
+      }
+    }
+  ]
+}

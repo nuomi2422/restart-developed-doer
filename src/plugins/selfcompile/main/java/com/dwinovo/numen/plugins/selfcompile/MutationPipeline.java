@@ -3,7 +3,39 @@ package com.dwinovo.numen.plugins.selfcompile;
 import java.time.Duration;
 import java.util.Objects;
 
-/** Orchestrates only the safe pre-compile stages; execution remains disabled. */
+/**
+ * Orchestrates only the safe pre-compile stages; execution remains disabled.
+ *
+ * <h2>★ 2026-10-01 已停用：整条变异流水线在游戏里从未接线</h2>
+ *
+ * <p><b>本类及其下游（{@link MutationCompiler} / {@link MutationVerification} /
+ * {@link MutationBudget} / {@link MutationStaticChecker} / {@link HarnessWriteLocks} /
+ * {@link MutationArtifactStore}）在生产代码里 0 处引用</b>——只有单测能调到它们。
+ * 换句话说：<b>它已经关着了</b>，不是"正在跑但有风险"，而是<b>根本没接上线</b>。
+ *
+ * <p><b>为什么看起来像活的：</b>它有完整设计、11 态状态机、48 个通过的测试，
+ * 文档也把它当"自变异系统"讲。代码质量与可达性是两回事。
+ *
+ * <p><b>现在真正在跑的是什么：</b>
+ * <ul>
+ *   <li><b>游戏内</b>只剩一个"需求登记口"：{@code selfcompile_request} 写审计目录 +
+ *       {@code selfcompile_status} 查状态。<b>不生成代码、不编译、不部署。</b>
+ *       它的角色是<b>进游戏监督 AI 的小流程</b>——让游戏里的 AI 把需求落到盘上，
+ *       供工程流读取。</li>
+ *   <li><b>改码</b>已整个搬进工程流（stager）②编码实现阶段 + 外层
+ *       {@code rdd-selfcompile/scripts/run-mutation.ps1}（唯一改码入口）。
+ *       那条链自己用 {@code new-mutation.ps1} 造目录 id，
+ *       <b>与本插件的 {@code MutationWorkspace} 是两个不相干的命名空间</b>。</li>
+ * </ul>
+ *
+ * <p><b>处置：暂时保留但标注停用，不要接线。</b>设计本身（11 态 + 预算止损 +
+ * 结构化编译错误 + 全链证据核验）仍值得留档，将来若要把自编译搬回游戏内再启用。
+ * 若误把它当"当前改码通道"去接线，会造出<b>第二套真相源</b>——
+ * 外层已有一套 MutationId 与门禁，两套并存必然漂移。
+ *
+ * <p>删除前先确认 {@code 30-主要功能不回退清单.md} 没有依赖它。
+ * 真正的改码通道见 {@code AGENTS.md}「唯一改码入口」。
+ */
 public final class MutationPipeline {
     private final MutationWorkspace workspace;
     private final MutationSourceStore sources;
@@ -18,6 +50,28 @@ public final class MutationPipeline {
     public MutationManifest request(String requirement) throws java.io.IOException {
         if (!budget.tryAcquire()) throw new IllegalStateException("mutation budget exhausted");
         return workspace.create(requirement);
+    }
+
+    /**
+     * P5 提案：只登记需求 + 建隔离工作区（PROPOSED），<b>不占执行预算、不生成代码</b>。
+     * 审批通过（{@link #approve}）才转入执行链；否则 {@link #reject} 归档。
+     */
+    public MutationManifest propose(String requirement) throws java.io.IOException {
+        return workspace.propose(requirement);
+    }
+
+    /** 审批通过：PROPOSED → WORKSPACE_CREATED，并在此时占用一次执行预算（提案阶段不占）。 */
+    public MutationManifest approve(MutationManifest manifest) throws java.io.IOException {
+        if (manifest == null) throw new IllegalArgumentException("manifest must not be null");
+        if (!budget.tryAcquire()) throw new IllegalStateException("mutation budget exhausted");
+        return MutationStateMachine.transition(manifest, MutationState.WORKSPACE_CREATED, "");
+    }
+
+    /** 审批否决：PROPOSED → ARCHIVED（终态留档，日后可重开），不占预算。 */
+    public MutationManifest reject(MutationManifest manifest, String reason) throws java.io.IOException {
+        if (manifest == null) throw new IllegalArgumentException("manifest must not be null");
+        return MutationStateMachine.transition(manifest, MutationState.ARCHIVED,
+                reason == null || reason.isBlank() ? "proposal rejected" : reason);
     }
 
     public MutationManifest recordGeneratedSource(MutationManifest manifest,

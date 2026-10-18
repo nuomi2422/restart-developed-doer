@@ -1,0 +1,92 @@
+{
+  "name": "iron_armor_surface_v2",
+  "description": "地表铁矿露头做铁套（ACX 移植版）：循环(刷矿情→导航到矿→挖) 直到扫不到矿，熔炼全部粗铁，合成铁套。",
+  "tags": ["iron", "armor", "survival", "mining"],
+  "planner_notes": "DD 原版 iron_armor_surface.ac 里 while 的子步骤又叫 scan（与顶层重名），同样靠后写覆盖让 while 条件刷新。ACX 移植版：内层改名 scan_iter、while 条件读 $scan_iter.done、加 do_while=true 显式声明「条件源由本轮 body 产生」。导航坐标用 $prev.target_absX（$prev 在 while 内指向上一兄弟步，第 1 轮自然落在进入块前的输出上），挖的方块名用 $scan_iter.target_block。",
+  "safety_notes": "max_iters=24 + stagnant_limit=3 双重收场：矿挖完（scan_iter.done 变 false）正常退出；连续 3 轮没挖到东西判此路不通，PAUSED 不断言失败。",
+  "steps": [
+    {
+      "id": "check_tools",
+      "block": "check_inventory",
+      "params": { "check": "pickaxe,furnace,torch" }
+    },
+    {
+      "id": "prep",
+      "block": "if",
+      "params": {
+        "condition": { "field": "$prev.found", "op": "==", "value": false }
+      },
+      "children": [
+        {
+          "id": "make_pick",
+          "block": "give_pickaxe",
+          "params": {}
+        },
+        {
+          "id": "make_furn",
+          "block": "make_furnace",
+          "params": {}
+        }
+      ]
+    },
+    {
+      "id": "scan0",
+      "block": "scan_blocks",
+      "params": {
+        "targets": ["iron_ore", "deepslate_iron_ore"],
+        "radius": 64,
+        "min_count": 1
+      }
+    },
+    {
+      "id": "loop",
+      "block": "while",
+      "params": {
+        "condition": { "field": "$scan_iter.done", "op": "==", "value": true },
+        "max_iters": 24,
+        "stagnant_limit": 3,
+        "do_while": true
+      },
+      "children": [
+        {
+          "id": "scan_iter",
+          "block": "scan_blocks",
+          "params": {
+            "targets": ["iron_ore", "deepslate_iron_ore"],
+            "radius": 64,
+            "min_count": 1
+          }
+        },
+        {
+          "id": "nav",
+          "block": "navigate_to",
+          "params": {
+            "x": "$prev.target_absX",
+            "y": "$prev.target_absY",
+            "z": "$prev.target_absZ",
+            "relative": false,
+            "ignore_failure": true
+          }
+        },
+        {
+          "id": "mine",
+          "block": "mine_block",
+          "params": {
+            "block": "$scan_iter.target_block",
+            "ignore_failure": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "smelt",
+      "block": "smelt_batch",
+      "params": { "input": "raw_iron", "count": "$input.count" }
+    },
+    {
+      "id": "armor",
+      "block": "make_iron_armor",
+      "params": {}
+    }
+  ]
+}

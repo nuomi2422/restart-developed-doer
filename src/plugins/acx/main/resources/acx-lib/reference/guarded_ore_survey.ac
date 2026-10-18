@@ -1,0 +1,54 @@
+{
+  "name": "guarded_ore_survey",
+  "version": "1",
+  "description": "守卫示例：起跑前置条件 + 步骤级 guard + 参数绑定描述符（$from/$as/$default）",
+  "tags": ["mining", "demo", "guard"],
+  "planner_notes": "演示 AC-B3 三件：preconditions 拦在起跑前（PAUSED 可续）、guard 在扫描确认有矿后才继续、绑定描述符做字段映射与默认值。",
+  "safety_notes": "guard 默认 on_fail=pause：没矿时暂停等重规划，不判死。",
+  "preconditions": [
+    {
+      "field": "$input.ready",
+      "op": "==",
+      "value": true,
+      "message": "环境未就绪",
+      "hint": "背包留空位后带 {\"ready\":true} 的 input 重跑"
+    }
+  ],
+  "steps": [
+    {
+      "id": "scan",
+      "block": "scan_blocks",
+      "params": { "targets": ["iron_ore"], "radius": 32, "min_count": 1 }
+    },
+    {
+      "id": "has_ore",
+      "block": "guard",
+      "params": {
+        "conditions": [ { "field": "$scan.count", "op": ">", "value": 0 } ],
+        "message": "附近没有铁矿",
+        "hint": "把 radius 调大或换区域后 resume"
+      }
+    },
+    {
+      "id": "nav",
+      "block": "navigate_to",
+      "params": {
+        "x": { "$from": "$scan.target_absX", "$as": "int", "$default": 0 },
+        "y": { "$from": "$scan.target_absY", "$as": "int", "$default": 0 },
+        "z": { "$from": "$scan.target_absZ", "$as": "int", "$default": 0 },
+        "block": "iron_ore"
+      }
+    },
+    {
+      "id": "mine",
+      "block": "mine_block",
+      "params": {
+        "block": "$scan.target_block",
+        "x": "$scan.target_absX",
+        "y": "$scan.target_absY",
+        "z": "$scan.target_absZ",
+        "count": 1
+      }
+    }
+  ]
+}

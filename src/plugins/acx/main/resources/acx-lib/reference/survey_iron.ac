@@ -1,0 +1,18 @@
+{
+  "name": "survey_iron",
+  "description": "子 AC：挖掉当前目标铁矿并回收掉落。被 ore_survey 以子 AC 方式调用。",
+  "tags": ["mining", "iron", "sub"],
+  "planner_notes": "子 AC 的输出 = 最后一个顶层 step 的输出，所以父 AC 想读子 AC 的结果就该用 $子AC名.字段 引用最后一步的字段名。本文件最后一步是 pickup_items（输出 gathered）。",
+  "steps": [
+    {
+      "id": "mine",
+      "block": "mine_block",
+      "params": { "block": "$input.block", "ignore_failure": true }
+    },
+    {
+      "id": "grab",
+      "block": "pickup_items",
+      "params": { "radius": 8, "ignore_failure": true }
+    }
+  ]
+}

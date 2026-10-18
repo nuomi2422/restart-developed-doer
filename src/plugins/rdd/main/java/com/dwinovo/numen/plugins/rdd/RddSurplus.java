@@ -25,11 +25,20 @@ final class RddSurplus {
         boolean owns = active != null && active.publicId().equals(run.bodyId());
         boolean current = run.chain() == chain && chain.currentSubtask() != null
                 && run.subtask().equals(chain.currentSubtask().id());
-        if (owns && (!current || !RddPlugin.supervisionEnabled()
+        boolean stopped = owns && (!current || !RddPlugin.supervisionEnabled()
                 || !RddSurplusPolicy.withinBudget(System.nanoTime() - run.started(),
                 ap.blockPosition().distSqr(run.origin()), ap.getHealth(),
-                counts.getOrDefault("minecraft:hay_block", 0) - run.initial())))
+                counts.getOrDefault("minecraft:hay_block", 0) - run.initial()));
+        if (stopped) {
             CompanionTickDispatcher.stopActive(ap, "optional hay surplus budget ended");
+            // 埋点：中途放弃的余量采集（已采集的干草随 body 停止不再追加）→ resource_waste（best-effort）
+            RddInstrumentation.publish(RddInstrumentation.RESOURCE_WASTE, Map.of(
+                    "companionId", ap.getUUID().toString(),
+                    "task", run.subtask(),
+                    "reason", "surplus gather abandoned at budget end",
+                    "context", Map.of("gatheredBeyondMinimum",
+                            counts.getOrDefault("minecraft:hay_block", 0) - run.initial())));
+        }
         if (!current) runs.remove(ap.getUUID());
     }
     boolean hold(NumenPlayer ap, TaskChain chain, Subtask task, Map<String, Integer> counts) {
@@ -40,7 +49,15 @@ final class RddSurplus {
             boolean owns = active != null && active.publicId().equals(run.bodyId());
             if (owns && RddSurplusPolicy.withinBudget(System.nanoTime() - run.started(), ap.blockPosition().distSqr(run.origin()), ap.getHealth(), have - run.initial()))
                 return true;
-            if (owns) CompanionTickDispatcher.stopActive(ap, "optional hay surplus budget reached; minimum already met");
+            if (owns) {
+                CompanionTickDispatcher.stopActive(ap, "optional hay surplus budget reached; minimum already met");
+                // 埋点：重复采集已充足的资源（minimum 已达仍派了余量采集，到预算停下）
+                RddInstrumentation.publish(RddInstrumentation.REPEAT_GATHER, Map.of(
+                        "companionId", ap.getUUID().toString(),
+                        "task", task.id(),
+                        "reason", "surplus gather stopped because minimum already met",
+                        "context", Map.of("minimumAlreadyMet", true)));
+            }
             // Keep the completed marker until the task changes: never start a second bonus.
             return false;
         }

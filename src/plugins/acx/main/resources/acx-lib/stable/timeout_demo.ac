@@ -1,0 +1,37 @@
+{
+  "name": "timeout_demo",
+  "version": "1",
+  "description": "按 AC 配 limits 的自证脚本：max_timeout_ms=300，循环体用 rdd_get_inventory（服务端直读背包，不走监听器，不会被连发打断）。跑到 wall-clock 熔断就该出 TIMEOUT。",
+  "tags": [
+    "demo",
+    "timeout"
+  ],
+  "planner_notes": "limits 逐项覆盖全局；没写的键沿用全局。三键：max_steps / max_timeout_ms / max_depth。",
+  "safety_notes": "只读背包 + 登记说明，不移动、不放置、不攻击。",
+  "limits": {
+    "max_steps": 100000,
+    "max_timeout_ms": 300
+  },
+  "steps": [
+    {
+      "id": "loop",
+      "block": "while",
+      "params": {
+        "condition": {
+          "field": "$input.keep",
+          "op": "==",
+          "value": true
+        },
+        "max_iters": 100000,
+        "stagnant_limit": 1000000
+      },
+      "children": [
+        {
+          "id": "tick",
+          "block": "rdd_get_inventory",
+          "params": {}
+        }
+      ]
+    }
+  ]
+}

@@ -30,4 +30,20 @@ class RddOptionalFoodTest {
 
         assertFalse(RddOptionalFood.canSkip(null, Map.of()));
     }
+
+    /** P2-C：目标食物已由背包/派生等价覆盖 → foodAlreadyCovered 判真（合成后不再重复耕作）。 */
+    @Test void foodAlreadyCoveredUsesDerivationEquivalence() {
+        var bread = Subtask.hardCoded("b", "bread x4", Map.of("asset_key", "minecraft:bread", "minimum", 4));
+
+        // 直接持有面包够
+        assertTrue(RddOptionalFood.foodAlreadyCovered(bread, Map.of("minecraft:bread", 4)));
+        // 没有面包，但有 12 小麦（等价 wheat→bread）→ 覆盖
+        assertTrue(RddOptionalFood.foodAlreadyCovered(bread, Map.of("minecraft:wheat", 12)));
+        // 都不够
+        assertFalse(RddOptionalFood.foodAlreadyCovered(bread, Map.of("minecraft:wheat", 3)));
+        // 群组条件走组计数
+        var foodGroup = Subtask.hardCoded("g", "food", Map.of("group", "food", "minimum", 10));
+        assertTrue(RddOptionalFood.foodAlreadyCovered(foodGroup, Map.of("minecraft:bread", 4, "minecraft:cooked_beef", 6)));
+        assertFalse(RddOptionalFood.foodAlreadyCovered(foodGroup, Map.of("minecraft:bread", 4)));
+    }
 }

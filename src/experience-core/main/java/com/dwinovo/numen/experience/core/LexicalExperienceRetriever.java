@@ -152,18 +152,15 @@ public final class LexicalExperienceRetriever implements ExperienceRetriever {
         return false;
     }
 
-    /** 分词：按非字母/数字切分，保留 CJK 连串与拉丁词。 */
-    private static List<String> tokens(String text) {
-        List<String> out = new ArrayList<>();
-        if (text == null) {
-            return out;
-        }
-        String[] parts = text.toLowerCase(Locale.ROOT).split("[^\\p{L}\\p{N}]+");
-        for (String p : parts) {
-            if (!p.isBlank()) {
-                out.add(p);
-            }
-        }
-        return out;
+    /**
+ * 分词：按非字母/数字切分，保留 CJK 连串与拉丁词。
+ *
+ * <p>⚠️ <b>中文必须额外切 2-gram</b>（见 {@link LexicalQueryTokenizer}）：
+ * 光保留整段的话，{@code "挖钻石之前先铺水"} 只有一个 token，
+ * 拿它做 {@code contains} 子串匹配几乎必然全不命中 ⇒ 中文目录恒为空。
+ * 这一层把中文切词挪到 tokenizer，英文路径的行为不变。</p>
+ */
+private static List<String> tokens(String text) {
+        return LexicalQueryTokenizer.tokenize(text);
     }
 }

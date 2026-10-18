@@ -1,6 +1,7 @@
 package com.dwinovo.numen.plugins.rdd;
 
 import com.dwinovo.numen.agent.llm.ConvoState;
+import com.dwinovo.numen.agent.llm.BudgetPolicy;
 import com.dwinovo.numen.agent.llm.LlmEndpoint;
 import com.dwinovo.numen.agent.llm.LlmObservation;
 import com.dwinovo.numen.agent.llm.NumenLlmClient;
@@ -9,7 +10,6 @@ import com.dwinovo.numen.agent.provider.IToolSpec;
 import com.dwinovo.numen.agent.provider.LlmToolCall;
 import com.dwinovo.numen.platform.Services;
 import com.dwinovo.numen.platform.services.INumenConfig;
-import com.dwinovo.numen.rdd.api.BodyInstruction;
 import com.dwinovo.numen.rdd.api.Goal;
 import com.dwinovo.numen.rdd.api.SubtaskSpec;
 import com.dwinovo.numen.rdd.core.PlanningAssetSnapshot;
@@ -45,6 +45,31 @@ final class RddDecomposer {
     private static final Logger LOG = LoggerFactory.getLogger(RddDecomposer.class);
     private static final Gson GSON = new Gson();
 
+    /**
+     * 规划层的"思考力度"（2026-10-07 用户裁决：生成太慢，思维过程不再需要）。
+     *
+     * <p>能表达"关"的站点（thinking 开关型 / enable-bool / budget / effort-none 方言）
+     * 直接 {@code off}；effort 族站点没有"关"的线格式（off 会被静默丢掉 = 等于没改），
+     * 退回 {@code low} 至少把思考量压下来。opencode-go 当前是 effort 族（今天发 low，
+     * 实测明显变快）；等 api jar 带上 effort-none 方言后这里自动升级成真正的 off，
+     * 不需要再改这段代码。
+     */
+    private static String plannerReasoningEffort() {
+        String format = "";
+        try {
+            format = com.dwinovo.numen.agent.provider.ProviderRegistry
+                    .thinkingFormat(Services.CONFIG.getProvider());
+        } catch (Throwable ignored) {
+            // 读不到站点方言就按 effort 族兜底
+        }
+        if (format == null || format.isBlank()
+                || com.dwinovo.numen.agent.provider.LlmProvider.THINKING_EFFORT.equals(format)
+                || com.dwinovo.numen.agent.provider.LlmProvider.THINKING_EFFORT_NESTED.equals(format)) {
+            return "low";
+        }
+        return "off";
+    }
+
     private RddDecomposer() {}
 
     /**
@@ -59,8 +84,16 @@ final class RddDecomposer {
             Minecraft.getInstance().execute(onFail);
             return;
         }
+        // 预算闸（E1 enforce）：planning 限额用尽 → 本次分解不发出，走 onFail
+        // （调用方据此回落占位链，绝不被吞）。shadow 模式恒为 null。
+        BudgetPolicy.Advice block = BudgetPolicy.checkBlock(stage, 0);
+        if (block != null) {
+            notifyPlanningBlock(stage, block);
+            Minecraft.getInstance().execute(onFail);
+            return;
+        }
         LlmEndpoint ep = new LlmEndpoint(cfg.getProvider(), cfg.getModel(), cfg.getApiKey(),
-                cfg.getBaseUrl(), cfg.getProxy(), "auto");
+                cfg.getBaseUrl(), cfg.getProxy(), plannerReasoningEffort());
         RddPlugin.publishPlanningContext(companionId, stage, userContent, system, tool);
         NumenLlmClient.forEndpoint(ep)
                 .chatStreaming(List.of(new ConvoState.Msg.User(userContent)),
@@ -81,6 +114,30 @@ final class RddDecomposer {
                 }));
     }
 
+    /**
+     * enforce 预算拦截的通知（限频，同角色冷却内只发一次）：日志 + rdd.jsonl 的
+     * {@code budget_block} 事件。拦截本身由调用点执行，这里只负责「不静默」。
+     */
+    private static void notifyPlanningBlock(String stage, BudgetPolicy.Advice block) {
+        if (!BudgetPolicy.notifyBlock(block)) return;
+        LOG.warn("[rdd] 预算拦截: stage={} role={} exceeded={} usedTokens={} limitTokens={}",
+                stage, block.role(), block.exceeded(), block.used().tokens(), block.limit().tokensPerWindow());
+        RddMonitor.publish("budget_block", Map.ofEntries(
+                Map.entry("actor", "supervisor"),
+                Map.entry("stage", stage),
+                Map.entry("status", "blocked"),
+                Map.entry("role", block.role()),
+                Map.entry("exceeded", String.join("+", block.exceeded())),
+                Map.entry("usedTokens", block.used().tokens()),
+                Map.entry("usedCalls", block.used().calls()),
+                Map.entry("usedMillis", block.used().millis()),
+                Map.entry("projectedTokens", block.projectedTokens()),
+                Map.entry("limitTokens", block.limit().tokensPerWindow()),
+                Map.entry("limitCalls", block.limit().callsPerWindow()),
+                Map.entry("limitMinutes", block.limit().minutesPerWindow()),
+                Map.entry("mode", block.mode())));
+    }
+
     /** 主入口：异步分解目标，回调收到一个可用的 Goal（成功=分解链，失败=占位链）。 */
     static void decompose(UUID companionId, String objective, Consumer<Goal> done) {
         INumenConfig cfg = Services.CONFIG;
@@ -89,14 +146,22 @@ final class RddDecomposer {
             Minecraft.getInstance().execute(() -> done.accept(RddChainFactory.fromObjective(companionId, objective)));
             return;
         }
+        // 预算闸（E1 enforce）：planning 限额用尽 → 不发出分解请求，直接回落占位链
+        // （目标绝不被吞；明确记事件与日志，不静默）。shadow 模式恒为 null。
+        BudgetPolicy.Advice block = BudgetPolicy.checkBlock("fallback", 0);
+        if (block != null) {
+            notifyPlanningBlock("fallback", block);
+            LOG.warn("[rdd] planning 预算已用尽，跳过分解，回落占位链");
+            Minecraft.getInstance().execute(() -> done.accept(RddChainFactory.fromObjective(companionId, objective)));
+            return;
+        }
         LlmEndpoint ep = new LlmEndpoint(cfg.getProvider(), cfg.getModel(), cfg.getApiKey(),
-                cfg.getBaseUrl(), cfg.getProxy(), "auto");
+                cfg.getBaseUrl(), cfg.getProxy(), plannerReasoningEffort());
         // 经验知识贴进最终请求正文（无知识时与原来逐字相同）
         PlanningAssetSnapshot snapshot = RddPlugin.planningSnapshot(companionId);
         String userContent = RddPlanningKnowledge.withKnowledge(RddPlanningKnowledge.HOST, companionId,
                 RddRiskPlanning.prepHint(objective, snapshot.availableCounts())
-                        + decompositionPrompt(objective, snapshot, List.of(),
-                                RddPlugin.planningAssets(companionId)),
+                        + decompositionPrompt(objective, snapshot, List.of()),
                 objective, "fallback", List.of());
         RddPlugin.publishPlanningContext(companionId, "fallback", userContent, SYSTEM_PROMPT, DECOMPOSE_TOOL);
         NumenLlmClient.forEndpoint(ep)
@@ -158,7 +223,7 @@ final class RddDecomposer {
         // §9：重试带上下文修正——再次尝试时把"为何上次不可执行"喂回去，逼 LLM 给可检测的真实物品键。
         String hint = attempt >= 1
                 ? "\n注意：上一次生成的子步骤被判定不可执行——每个 asset_key 必须是完整的小写命名空间 ID"
-                + "（如 minecraft:oak_log），condition 必须有真实可检测物品，minimum 给具体数字，body 可选。"
+                + "（如 minecraft:oak_log），condition 必须有真实可检测物品，minimum 给具体数字。"
                 + "不要裸键/占位符/大写，不要用 \"goal\" 冒充物品。宁可少拆，不可拆出跑不动的步骤。"
                 : "";
         // 上一次被判定不可执行 → 把该失败事实一并交给知识侧，召回「这类失败该怎么办」的经验
@@ -169,8 +234,7 @@ final class RddDecomposer {
         String base = RddPlanningKnowledge.attach(
                 RddRiskPlanning.prepHint(themeObjective, snapshot.availableCounts())
                         + decompositionPrompt(themeObjective, snapshot,
-                        completedStages == null ? List.of() : completedStages,
-                        RddPlugin.planningAssets(companionId)) + hint
+                        completedStages == null ? List.of() : completedStages) + hint
                         + (extraHint == null || extraHint.isBlank() ? "" : "\n\n" + extraHint),
                 RddPlanningPolicy.block(themeObjective, "stage_b"));
         String userContent = RddPlanningKnowledge.withKnowledge(RddPlanningKnowledge.HOST, companionId,
@@ -223,7 +287,12 @@ final class RddDecomposer {
         return out;
     }
 
-    /** 单条规格：description 非空、condition 含 asset_key（+可选非负 minimum）；body 可选。非法返回 null。 */
+    /**
+     * 单条规格：description 非空、condition 含 asset_key（+可选非负 minimum）。非法返回 null。
+     *
+     * <p>2026-10-07 用户裁决（单驾驶员）：规划器<b>不给身体动作</b>，body 一律忽略（传 null）。
+     * 身体只有一个驾驶员（执行 AI），派活是它的事。
+     */
     private static SubtaskSpec parseOne(JsonObject o) {
         String description = o.has("description") ? o.get("description").getAsString() : null;
         if (description == null || description.isBlank()) {
@@ -238,7 +307,7 @@ final class RddDecomposer {
             Map<String, Object> fact = new LinkedHashMap<>();
             for (var entry : cond.entrySet()) fact.put(entry.getKey(), toPlain(entry.getValue()));
             return com.dwinovo.numen.rdd.core.WorldFactConditions.valid(fact)
-                    ? new SubtaskSpec(description, fact, parseBody(o.get("body"))) : null;
+                    ? new SubtaskSpec(description, fact, null) : null;
         }
         String assetKey = cond.has("asset_key") ? cond.get("asset_key").getAsString() : null;
         // 资产键形状不可执行(裸键/占位如 goal/大写) 永不匹配背包键 -> 判不可用丢弃，
@@ -261,26 +330,7 @@ final class RddDecomposer {
         if (cond.has("optional") && cond.get("optional").isJsonPrimitive()
                 && cond.getAsJsonPrimitive("optional").isBoolean())
             condition.put("optional", cond.get("optional").getAsBoolean());
-        return new SubtaskSpec(description, condition, parseBody(o.get("body")));
-    }
-
-    /** body 可选；task_type 非空才认，否则视为检测-only。 */
-    private static BodyInstruction parseBody(JsonElement bodyEl) {
-        if (bodyEl == null || !bodyEl.isJsonObject()) {
-            return null;
-        }
-        JsonObject b = bodyEl.getAsJsonObject();
-        String taskType = b.has("task_type") ? b.get("task_type").getAsString() : null;
-        if (taskType == null || taskType.isBlank()) {
-            return null;
-        }
-        Map<String, Object> args = new LinkedHashMap<>();
-        if (b.has("args") && b.get("args").isJsonObject()) {
-            for (var entry : b.getAsJsonObject("args").entrySet()) {
-                args.put(entry.getKey(), toPlain(entry.getValue()));
-            }
-        }
-        return new BodyInstruction(taskType, args);
+        return new SubtaskSpec(description, condition, null);
     }
 
     /** Gson JsonElement → 纯 JVM 值（String/Number/Boolean/null/Map/List）。 */
@@ -322,11 +372,22 @@ final class RddDecomposer {
     private static final String SYSTEM_PROMPT =
             "你是 MC 女仆的目标分解器。把主人的目标拆成 1~8 个具体、按依赖顺序排列、可逐步检测的子步骤。"
                     + "每个子步骤的 condition 必须用真实的 minecraft 物品命名空间 ID（如 minecraft:oak_log、"
-                    + "minecraft:iron_ingot），数量 minimum 给具体数字。能交给身体执行的一步带上 body 工具调用。"
+                    + "minecraft:iron_ingot），数量 minimum 给具体数字。只给完成条件，不要派身体动作。"
                     + "通用食物/木头/垫脚方块需求优先用 condition:{group:food|wood|blocks,minimum:数量}，组内按物品总数相加，禁止同时给asset_key。"
-                    + "food只计直接可食用的安全食物，不计小麦/干草/生土豆；wood原木和木板按件计，不换算配方。指定合成原料仍用asset_key。"
-                    + "世界条件可用type=advancement(advancement ID)、entity_killed(entity ID,minimum)、structure(structure ID,可选dimension)、base(可选dimension)。"
-                    + "base必须本人已绑定可重生的床，附近已放置箱子和熔炉；背包设施不算建成。structure须本人到达已加载结构，击杀须本人统计，不以实体消失当击败。"
+                    + "food只计直接可食用的东西，生肉/腐肉也计（捡回来就算推进），不计小麦/干草/生土豆/种子；wood原木和木板按件计，不换算配方。指定合成原料仍用asset_key。"
+                    + "世界条件可用type=advancement(advancement ID)、entity_killed(entity ID,minimum)、structure(structure ID 或 #tag，可选dimension)、base(可选dimension)。"
+                    + "另外三种读周围环境：type=biome(biome ID 或 #tag) 判「站在什么群系」；"
+                    + "type=block_nearby(block ID 或 #tag, radius) 判「附近有没有这类方块」（矿石/刷怪笼/草捆这类没方块实体的也能查到，默认半径8，上限16）；"
+                    + "type=container_nearby(item ID 或 #tag, minimum, radius) 判「附近箱子里有没有这种东西」（默认半径8，上限16）；"
+                    + "type=block_mined(block ID 或 #tag, minimum) 与 item_crafted/item_used/item_picked_up(item ID 或 #tag, minimum) 判「本人终身统计真的做了 N 次」"
+                    + "（服务器权威、跨重启；挖矿/合成/使用/拾取各对应一个）；"
+                    + "type=dimension(dimension ID) 判「本人在某维度」；type=y_below(y, 可选dimension) 判「本人 Y≤y」；"
+                    + "type=position_at(x,y,z, 可选radius) 判「本人在该点附近」（默认半径4，上限16）；"
+                    + "type=entity_nearby(entity ID 或 #tag, radius) 判「附近有这种实体」；"
+                    + "type=block_at(x,y,z,block ID 或 #tag) 判「指定坐标是某方块」；"
+                    + "type=container_at(x,y,z,item ID 或 #tag, minimum) 判「指定坐标容器里有某物」。"
+                    + "精确 ID 与 #tag 都接受：村庄要写 minecraft:village_plains 等五个之一，或直接用 #minecraft:village；海底神殿是 minecraft:monument 不是 ocean_monument。"
+                    + "base只要求本人已绑定的可重生床完整可用；附近箱子和熔炉不再当硬门（建成它们会另排步骤，不要塞进 base）。structure须本人到达已加载结构，击杀须本人统计，不以实体消失当击败。"
                     + "没有对应验收器的部分不要伪造物品替代。只输出 decompose_goal 工具调用，不要写多余文字。";
 
     static String decompositionPrompt(String objective, Map<String, Integer> held,
@@ -340,30 +401,61 @@ final class RddDecomposer {
     }
 
     /** P1.5：Planner 直接吃统一资产快照（含"已失去/不确定"显式告知）。 */
+    /** 拆解主路径（2026-10-07 起）：目标 + 已完成阶段 + 当前持有，不再贴世界资产/村庄/时间成本。 */
+    static String decompositionPrompt(String objective, PlanningAssetSnapshot snapshot,
+                                      List<String> completedStages) {
+        return composeDecompositionPrompt(objective, completedStages, renderHeldAssets(snapshot), "", "");
+    }
+
     static String decompositionPrompt(String objective, PlanningAssetSnapshot snapshot,
                                       List<String> completedStages, String worldAssets) {
-        return composeDecompositionPrompt(objective, completedStages, renderHeldAssets(snapshot), worldAssets);
+        return composeDecompositionPrompt(objective, completedStages, renderHeldAssets(snapshot), worldAssets, "");
+    }
+
+    /** P2-D：带已观测村庄事实块。 */
+    static String decompositionPrompt(String objective, PlanningAssetSnapshot snapshot,
+                                      List<String> completedStages, String worldAssets, String villageBlock) {
+        return composeDecompositionPrompt(objective, completedStages, renderHeldAssets(snapshot),
+                worldAssets, villageBlock);
     }
 
     private static String composeDecompositionPrompt(String objective, List<String> completedStages,
                                                       String heldBlock, String worldAssets) {
+        return composeDecompositionPrompt(objective, completedStages, heldBlock, worldAssets, "");
+    }
+
+    private static String composeDecompositionPrompt(String objective, List<String> completedStages,
+                                                      String heldBlock, String worldAssets, String villageBlock) {
+        // 2026-10-07 用户裁决：世界资产块 / 村庄事实列表 / 可恢复线索 / P2-E 时间成本刻度 不再注入
+        // 规划 prompt —— 固定旧债，白烧 token（烧钱），还会盖过主人写进经验库的路线。
+        // 参数保留只为不动一串签名（调用点已不再传真值）；这些事实执行侧仍会按需观察。
         return "主人的目标：" + objective + "\n\n"
                 + renderCompletedStages(completedStages)
                 + heldBlock
-                + (worldAssets == null || worldAssets.isBlank() ? "" : worldAssets + "\n\n")
                 + "请用 decompose_goal 工具给出子步骤。每个子步骤包含：\n"
                 + "- description：这一步要做什么\n"
                 + "- condition：{asset_key: 物品命名空间ID, minimum: 需要数量}\n"
                 + "  或 {group: food|wood|blocks, minimum: 组内最低总数}；不要强求食物品种齐全。\n"
+                + "  床/羊毛/木板这类有颜色或树种变体的物品，写具体 ID（如 minecraft:white_bed）；"
+                + "写裸名（minecraft:bed）会按同族任意变体兜底，但优先写具体 ID。\n"
                 + "  世界事实：{type:base}；{type:advancement,advancement:minecraft:story/...}；"
-                + "{type:structure,structure:minecraft:stronghold}；{type:entity_killed,entity:minecraft:ender_dragon,minimum:1}。\n"
-                + "- body（可选）：把这一步直接交给女仆身体执行。task_type 只能从下面 4 个里选，"
-                + "args 统一用 {item, count}（item=物品/矿石命名空间ID，count=要拿到的数量，尽量与 condition 对齐）：\n"
-                + "    mine：挖矿/采集方块（如 {item: \"minecraft:iron_ore\", count: 3}，可给 minecraft:raw_iron）\n"
-                + "    craft：合成（如 {item: \"minecraft:iron_pickaxe\", count: 1}）\n"
-                + "    equip_item：装备（如 {item: \"minecraft:iron_pickaxe\"}）\n"
-                + "    collect_items：捡起附近掉落物（可选 {item} 限定）\n"
-                + "    严禁用这 4 个之外的工具名——不存在的名字不会被执行，只会拖慢推进。\n";
+                + "{type:structure,structure:'#minecraft:village'}（或 minecraft:village_plains 等具体 ID）；"
+                + "{type:biome,biome:'#minecraft:is_forest'}（或 minecraft:desert 等具体 ID）；"
+                    + "{type:block_nearby,block:'#minecraft:ores',radius:8}；"
+                    + "{type:container_nearby,item:minecraft:wheat,minimum:16,radius:8}；"
+                    + "{type:entity_killed,entity:minecraft:ender_dragon,minimum:1}；"
+                    + "{type:block_mined,block:minecraft:stone,minimum:32}；"
+                    + "{type:item_crafted,item:minecraft:bread,minimum:3}；"
+                    + "{type:dimension,dimension:minecraft:the_nether}；{type:y_below,y:0}；"
+                    + "{type:position_at,x:100,y:64,z:200,radius:4}；"
+                    + "{type:entity_nearby,entity:minecraft:cow,radius:8}；"
+                    + "{type:block_at,x:100,y:64,z:200,block:minecraft:crafting_table}；"
+                    + "{type:container_at,x:100,y:64,z:200,item:minecraft:diamond,minimum:1}。\n"
+                    + "  只用下面这十七种类型：advancement/structure/entity_killed/base/biome/block_nearby/container_nearby/"
+                    + "block_mined/item_crafted/item_used/item_picked_up/dimension/position_at/y_below/entity_nearby/block_at/container_at，"
+                    + "写别的一律会被丢掉（整条步骤消失且不报错）。ID 不确定就用 #tag。\n"
+                + "  你只负责给「完成条件」，不要给身体动作指令 —— 身体只有一个驾驶员（执行 AI），"
+                + "派活是它的事，不是规划器的事。\n";
     }
 
     /** 已完成前置阶段上下文块（空则返回空串）。 */
@@ -417,47 +509,46 @@ final class RddDecomposer {
     private static final IToolSpec DECOMPOSE_TOOL = new IToolSpec() {
         @Override public String name() { return "decompose_goal"; }
         @Override public String description() {
-            return "把主人的目标拆成可逐步检测、可逐步执行的子步骤列表。"
+            return "把主人的目标拆成可逐步检测的子步骤列表。"
                     + "每个子步骤必须能被世界状态确定性判定：condition 里给 asset_key（minecraft 物品命名空间 ID）"
-                    + "和 minimum（数量）。可选的 body 指定把这步交给哪个身体工具执行（task_type + args）。";
+                    + "和 minimum（数量）。只给完成条件，不给身体动作（身体只有一个驾驶员）。";
         }
         @Override public Map<String, Object> parameterSchema() {
+            // 2026-09-29 放宽：optional=true 对任何类型生效（判定层已同步放宽），不只是补充食物。
+            Map<String, Object> conditionProps = Map.ofEntries(
+                    Map.entry("type", Map.of("type", "string", "enum",
+                            List.of("inventory", "advancement", "structure", "entity_killed", "base",
+                                    "biome", "block_nearby", "container_nearby",
+                                    "block_mined", "item_crafted", "item_used", "item_picked_up",
+                                    "dimension", "position_at", "y_below",
+                                    "entity_nearby", "block_at", "container_at"))),
+                    Map.entry("advancement", Map.of("type", "string")),
+                    Map.entry("structure", Map.of("type", "string")),
+                    Map.entry("entity", Map.of("type", "string")),
+                    Map.entry("dimension", Map.of("type", "string")),
+                    Map.entry("asset_key", Map.of("type", "string",
+                            "description", "minecraft 物品命名空间ID，如 minecraft:oak_log")),
+                    Map.entry("group", Map.of("type", "string", "enum", List.of("food", "wood", "blocks"))),
+                    Map.entry("optional", Map.of("type", "boolean", "description",
+                            "标 true 表示这个目标达成与否都不影响主线（可跳过，不会阻塞整条任务链）。"
+                                    + "只要不是必需物资/关键装备/主线进度，就标 true；不要滥用，必需项保持 false 或不标。")),
+                    Map.entry("minimum", Map.of("type", "integer", "description", "需要的最少数量")));
+            Map<String, Object> subtaskItem = Map.of(
+                    "type", "object",
+                    "properties", Map.of(
+                            "description", Map.of("type", "string", "description", "这一步做什么（给主人的可读说明）"),
+                            "condition", Map.of(
+                                    "type", "object",
+                                    "description", "确定性完成条件",
+                                    "properties", conditionProps,
+                                    "required", List.of())),
+                    "required", List.of("description", "condition"));
             return Map.of(
                     "type", "object",
                     "properties", Map.of(
                             "subtasks", Map.of(
                                     "type", "array",
-                                    "items", Map.of(
-                                            "type", "object",
-                                            "properties", Map.of(
-                                                    "description", Map.of("type", "string",
-                                                            "description", "这一步做什么（给主人的可读说明）"),
-                                                    "condition", Map.of(
-                                                            "type", "object",
-                                                            "description", "确定性完成条件",
-                                                            "properties", Map.of(
-                                                                    "type", Map.of("type", "string", "enum", List.of("inventory", "advancement", "structure", "entity_killed", "base")),
-                                                                    "advancement", Map.of("type", "string"),
-                                                                    "structure", Map.of("type", "string"),
-                                                                    "entity", Map.of("type", "string"),
-                                                                    "dimension", Map.of("type", "string"),
-                                                                    "asset_key", Map.of("type", "string",
-                                                                            "description", "minecraft 物品命名空间ID，如 minecraft:oak_log"),
-                                                                    "group", Map.of("type", "string", "enum", List.of("food", "wood", "blocks")),
-                                                                    "optional", Map.of("type", "boolean", "description", "仅明确可省略的补充食物标true"),
-                                                                    "minimum", Map.of("type", "integer",
-                                                                            "description", "需要的最少数量")),
-                                                            "required", List.of()),
-                                                    "body", Map.of(
-                                                            "type", "object",
-                                                            "description", "可选的交给身体执行的指令",
-                                                            "properties", Map.of(
-                                                                    "task_type", Map.of("type", "string",
-                                                                            "description", "身体工具名，仅限 4 个: mine(挖矿)/craft(合成)/equip_item(装备)/collect_items(捡掉落)。不要用其他名字——不存在的名字不会执行。"),
-                                                                    "args", Map.of("type", "object",
-                                                                            "description", "工具参数，统一用 {item, count}（item=物品/矿石命名空间ID, count=数量）。")),
-                                                            "required", List.of("task_type")))),
-                                    "required", List.of("description", "condition"))),
+                                    "items", subtaskItem)),
                     "required", List.of("subtasks"));
         }
     };

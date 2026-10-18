@@ -34,8 +34,12 @@ public final class RecoveryPolicy {
             case REPLAN -> new RecoveryPlan(RecoveryAction.REQUEST_REPLAN,
                     List.of("收集失败事实与现有资产", "请求重规划（改变计划，非原地重试）"),
                     decision.reason());
+            // 2026-10-01 RL-19（38号v3.4 §1）：原来这一步写死「提交 selfcompile_request」，
+            // 等于在恢复计划里**点名教唆**游戏内 AI 去请求代码变更。
+            // 但 RL-19 要求游戏内 AI 只能往待办目录写一条 —— 唯一合法的 caller 是**外层**。
+            // → 改成指向待办目录；外层看到待办后再决定要不要改、怎么改（用户 2026-10-01 原话）。
             case SELF_COMPILE -> new RecoveryPlan(RecoveryAction.REQUEST_SELF_COMPILE,
-                    List.of("整理现象与最小复现", "提交 selfcompile_request"),
+                    List.of("把现象与最小复现写进待办目录（learner_note）", "附上所处环境快照"),
                     decision.reason());
         };
     }

@@ -37,7 +37,7 @@ final class RddStagePlanner {
         PlanningAssetSnapshot snapshot = RddPlugin.planningSnapshot(companionId);
         String base = RddPlanningKnowledge.attach(
                 RddRiskPlanning.prepHint(objective, snapshot.availableCounts())
-                        + planningPrompt(objective, snapshot, RddPlugin.planningAssets(companionId)),
+                        + planningPrompt(objective, snapshot),
                 RddPlanningPolicy.block(objective, "stage_a"));
         String userContent = RddPlanningKnowledge.withKnowledge(RddPlanningKnowledge.HOST, companionId,
                 base, objective, "stage_a", List.of());
@@ -147,10 +147,28 @@ final class RddStagePlanner {
         return composePlanningPrompt(objective, renderHeldAssets(snapshot), worldAssets);
     }
 
+    /** 规划主路径（2026-10-07 起）：目标 + 当前持有 + 策略，不再贴世界资产/村庄/时间成本。 */
+    static String planningPrompt(String objective, PlanningAssetSnapshot snapshot) {
+        return composePlanningPrompt(objective, renderHeldAssets(snapshot), "", "");
+    }
+
+    /** P2-D：附带已观测村庄事实块（先事实，策略留给规划师评价）。 */
+    static String planningPrompt(String objective, PlanningAssetSnapshot snapshot,
+                                 String worldAssets, String villageBlock) {
+        return composePlanningPrompt(objective, renderHeldAssets(snapshot), worldAssets, villageBlock);
+    }
+
     private static String composePlanningPrompt(String objective, String heldBlock, String worldAssets) {
+        return composePlanningPrompt(objective, heldBlock, worldAssets, "");
+    }
+
+    private static String composePlanningPrompt(String objective, String heldBlock,
+                                                String worldAssets, String villageBlock) {
+        // 2026-10-07 用户裁决：世界资产块 / 村庄事实列表 / 可恢复线索 / P2-E 时间成本刻度 不再注入
+        // 规划 prompt —— 固定旧债，白烧 token（烧钱），还会盖过主人写进经验库的路线。
+        // 参数保留只为不动一串签名（调用点已不再传真值）。
         return "主人的目标：" + objective + "\n\n"
                 + heldBlock
-                + (worldAssets == null || worldAssets.isBlank() ? "" : worldAssets + "\n\n")
                 + PLAN_BODY_TAIL;
     }
 
@@ -179,6 +197,9 @@ final class RddStagePlanner {
                     .append("【规划铁律】站在\"已经拥有上面这些\"继续推进：已持有的装备/工具/设施（如 wooden_pickaxe、crafting_table）")
                     .append("不要在任何阶段重复规划重新获取；theme 从现状往下一时代推进，不倒退。")
                     .append("只有后续会被消耗掉的东西（食物、合成/烧炼原料）才按需要规划补量。\n\n");
+        } else {
+            // 【C-补】空背包也要显式告知，避免"没块"与"空背包"无法区分（正是难查的根因）。
+            sb.append("【你当前已真实持有（背包扫描）：】（背包为空或尚未观测到——按空背包规划）\n\n");
         }
         if (snap != null && !snap.lostIds().isEmpty()) {
             sb.append("【已失去（死亡/掉落判定失效，绝不要假设还持有，需要就重新获取）：】")

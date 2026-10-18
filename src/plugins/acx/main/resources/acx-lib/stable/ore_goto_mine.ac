@@ -1,0 +1,70 @@
+{
+  "name": "ore_goto_mine",
+  "version": "1",
+  "description": "血量门 + 有矿门都过才挖 1 个铁矿；mine 是异步任务，跑起来会先 PAUSED 等完成。",
+  "tags": [
+    "mining",
+    "async",
+    "guard"
+  ],
+  "planner_notes": "门用 $scan.matches.0.block 判「列表里有没有矿」——数组下标是 AcxValueResolver.resolvePath 支持的。",
+  "safety_notes": "会破坏方块（挖矿），半径只扫不炸。",
+  "steps": [
+    {
+      "id": "read",
+      "block": "get_self_status",
+      "params": {}
+    },
+    {
+      "id": "hp_guard",
+      "block": "guard",
+      "params": {
+        "condition": {
+          "field": "$read.hp",
+          "op": ">=",
+          "value": 10
+        },
+        "message": "血量低于 10，不下矿",
+        "hint": "先回城补给或等回血"
+      }
+    },
+    {
+      "id": "scan",
+      "block": "scan_blocks",
+      "params": {
+        "block_ids": [
+          "minecraft:iron_ore"
+        ],
+        "radius": 24
+      }
+    },
+    {
+      "id": "has_ore",
+      "block": "guard",
+      "params": {
+        "condition": {
+          "field": "$scan.matches.0.block",
+          "op": "==",
+          "value": "minecraft:iron_ore"
+        },
+        "message": "半径 24 内没扫到铁矿",
+        "hint": "换个位置再试"
+      }
+    },
+    {
+      "id": "mine",
+      "block": "mine",
+      "params": {
+        "block_ids": [
+          "minecraft:iron_ore"
+        ],
+        "count": 1
+      }
+    },
+    {
+      "id": "read2",
+      "block": "get_self_status",
+      "params": {}
+    }
+  ]
+}

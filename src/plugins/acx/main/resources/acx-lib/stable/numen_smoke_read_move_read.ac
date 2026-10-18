@@ -1,0 +1,28 @@
+{
+  "name": "numen_smoke_read_move_read",
+  "description": "AC-B2 最小闭环冒烟：读位置 → 依读到的位置移动 → 再读位置确认。用来验证 ①运行期调用 ②真实输出传递（含嵌套字段点路径）③受理≠完成 ④每步 trace。",
+  "tags": ["smoke", "numen", "move"],
+  "planner_notes": "移动目标直接取 $before.position.*（演示嵌套字段引用）。goto 是异步任务：第一遍执行只会拿到受理回执（PAUSED + _accepted=true），真正完成靠 task_finished / 完成探针，resume 后从断点继续到 after。真机验证清单见 docs/05 阶段二。",
+  "safety_notes": "goto 带 ignore_failure（移动失败不毁整条链）；may_alter_terrain=false 不允许破坏地形。",
+  "steps": [
+    {
+      "id": "before",
+      "block": "get_self_status"
+    },
+    {
+      "id": "move",
+      "block": "goto",
+      "params": {
+        "x": "$before.position.x",
+        "y": "$before.position.y",
+        "z": "$before.position.z",
+        "may_alter_terrain": false,
+        "ignore_failure": true
+      }
+    },
+    {
+      "id": "after",
+      "block": "get_self_status"
+    }
+  ]
+}

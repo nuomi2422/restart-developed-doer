@@ -54,4 +54,20 @@ class HardCodedEvaluatorTest {
         Map<String, Object> cond = Map.<String, Object>of("asset_key", "a", "minimum", -1);
         assertFalse(HardCodedEvaluator.matches(cond, Map.of("a", 100)));
     }
+
+    @Test void bareNameFallsBackToVariantFamily() {
+        // 2026-10-07 实机：模型写 minecraft:bed，背包里却是 minecraft:white_bed → 二级卡死 STALLED。
+        // 裸名兜底：minecraft:bed 按任意 *_bed 加总。
+        assertTrue(HardCodedEvaluator.matches(Map.of("asset_key", "minecraft:bed", "minimum", 1),
+                Map.of("minecraft:white_bed", 1)));
+        assertTrue(HardCodedEvaluator.matches(Map.of("asset_key", "minecraft:wool", "minimum", 3),
+                Map.of("minecraft:white_wool", 2, "minecraft:red_wool", 1)));
+        // 精确键在时仍走精确：同一根键不会把不相关族算进来
+        assertFalse(HardCodedEvaluator.matches(Map.of("asset_key", "minecraft:bed", "minimum", 1),
+                Map.of("minecraft:white_wool", 5)));
+        // 带下划线的具体键 / 非 minecraft 命名空间 / 占位裸键 不兜底
+        assertFalse(HardCodedEvaluator.matches(Map.of("asset_key", "minecraft:oak_log", "minimum", 1),
+                Map.of("minecraft:birch_log", 1)));
+        assertFalse(HardCodedEvaluator.matches(Map.of("asset_key", "goal", "minimum", 1), Map.of("x", 1)));
+    }
 }

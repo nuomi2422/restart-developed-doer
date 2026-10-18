@@ -1,0 +1,32 @@
+{
+  "name": "mine_ore_wallbreak",
+  "description": "一条龙破墙挖矿：扫描目标矿物→XYZ破墙寻路→循环挖掘。适用于任何方块/矿物（铁矿、煤矿、钻石、青金石、红石、金矿等）。ACX 移植版修了 DD 版的 3 处字段引用。",
+  "tags": ["mining", "wall_break", "auto", "universal", "ore", "tunnel", "core"],
+  "planner_notes": "DD 原版用 $prev.nearest_x / nearest_y / nearest_z 导航，但 scan_blocks 实际不输出这三个字段（只有 target_absX/Y/Z 和 nearest_hostile_x/y/z）—— 加载器只 WARN，然后字面串被当坐标喂给寻路积木。本版改用 $prev.target_absX/Y/Z。comment 字段 DD 加载器会忽略，ACX 也保留忽略。",
+  "safety_notes": "mine_path_to 已内建危险检测：岩浆/水源/火焰自动跳过。向下挖时检测虚空/岩浆。上方沙子/沙砾塌方警告。beta 分级：需人工 approve 才会进 active。",
+  "steps": [
+    {
+      "id": "scan_target",
+      "block": "scan_blocks",
+      "params": { "target": "$input.target", "radius": 64, "min_count": 1 },
+      "comment": "第一步：扫描周围目标方块，获取位置缓存"
+    },
+    {
+      "id": "path_to_nearest",
+      "block": "mine_path_to",
+      "params": {
+        "x": "$prev.target_absX",
+        "y": "$prev.target_absY",
+        "z": "$prev.target_absZ",
+        "relative": false
+      },
+      "comment": "第二步：计算X→Z→Y破墙路径，返回坐标列表"
+    },
+    {
+      "id": "mine_first",
+      "block": "mine_block",
+      "params": { "block": "$input.target", "ignore_failure": true },
+      "comment": "第三步：挖掘目标方块（自动从缓存取最近）"
+    }
+  ]
+}

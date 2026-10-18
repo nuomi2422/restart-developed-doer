@@ -1,0 +1,110 @@
+{
+  "name": "defend_self_v2",
+  "description": "自动战斗防御（ACX 移植版）。扫敌→开战斗→怪多先举盾→循环(刷敌情+导航接近+举盾+反击+捡掉落)→打完关战斗。",
+  "tags": ["combat", "defense", "auto", "fight", "shield", "战斗", "防御"],
+  "planner_notes": "DD 原版 defend_self.ac 顶层与 while 内各有一个 step id 叫 scan，靠 allOutputs 后写覆盖让 while 条件随内层刷新而变false。ACX 加载器全深度查重会拒这份文件，所以移植版：①内层改名 scan_iter ②while 条件读 scan_iter.done ③加 do_while=true 让第 1 轮先跑起来（条件源在 body 里才产生）。语义与 DD 等价，且不再依赖 id 碰撞。",
+  "safety_notes": "while 内四步全部 ignore_failure：任一步失败就把该目标拉黑并换目标，不 abort 整条 AC。stagnant_limit=3 兜底连续 3 轮没打到东西就收手（PAUSED 不是 FAIL，断点保留）。",
+  "steps": [
+    {
+      "id": "note",
+      "block": "knowledge_note",
+      "params": { "keywords": "战斗 打怪 举盾 反击 装备武器" }
+    },
+    {
+      "id": "safety",
+      "block": "safety_check",
+      "params": { "avoid_liquids": true, "check_footing": true, "ledge_safety": true }
+    },
+    {
+      "id": "engage",
+      "block": "if",
+      "params": {
+        "condition": { "field": "$safety.safe", "op": "==", "value": true }
+      },
+      "children": [
+        {
+          "id": "scan0",
+          "block": "scan_blocks",
+          "params": { "target": "hostile", "radius": 16, "min_count": 1 }
+        },
+        {
+          "id": "battle",
+          "block": "if",
+          "params": {
+            "condition": { "field": "$prev.done", "op": "==", "value": true }
+          },
+          "children": [
+            {
+              "id": "aggro",
+              "block": "set_combat_mode",
+              "params": { "enabled": "true" }
+            },
+            {
+              "id": "crowd",
+              "block": "if",
+              "params": {
+                "condition": { "field": "$scan0.count", "op": ">=", "value": 3 }
+              },
+              "children": [
+                {
+                  "id": "hold",
+                  "block": "use_shield",
+                  "params": { "duration_sec": 3, "ignore_failure": true }
+                }
+              ]
+            },
+            {
+              "id": "fight",
+              "block": "while",
+              "params": {
+                "condition": { "field": "$scan_iter.done", "op": "==", "value": true },
+                "max_iters": 15,
+                "stagnant_limit": 3,
+                "do_while": true
+              },
+              "children": [
+                {
+                  "id": "scan_iter",
+                  "block": "scan_blocks",
+                  "params": { "target": "hostile", "radius": 16, "min_count": 1 }
+                },
+                {
+                  "id": "move",
+                  "block": "navigate_to",
+                  "params": {
+                    "x": "$prev.nearest_hostile_x",
+                    "y": "$prev.nearest_hostile_y",
+                    "z": "$prev.nearest_hostile_z",
+                    "relative": "false",
+                    "wait_reach": "true",
+                    "ignore_failure": true
+                  }
+                },
+                {
+                  "id": "shield",
+                  "block": "use_shield",
+                  "params": { "duration_sec": 2, "ignore_failure": true }
+                },
+                {
+                  "id": "attack",
+                  "block": "attack_entity",
+                  "params": { "ignore_failure": true }
+                },
+                {
+                  "id": "pickup",
+                  "block": "pickup_items",
+                  "params": { "ignore_failure": true }
+                }
+              ]
+            },
+            {
+              "id": "calm",
+              "block": "set_combat_mode",
+              "params": { "enabled": "false", "ignore_failure": true }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+modLoader = "javafml"
+loaderVersion = "${neoforge_loader_version_range}"
+license = "${license}"
+
+[[mods]]
+modId = "acx"
+version = "${version}"
+displayName = "ACX Execution Plugin"
+authors = "dwinovo"
+description = '''Host-independent ACX execution layer: bridge host atomic tools, run/resume/cancel AC scripts with nonlinear control flow, expose acx_execute/acx_status/acx_resume/acx_cancel and library gates to the agent.'''
+
+[[dependencies.acx]]
+modId = "numen_api"
+type = "required"
+versionRange = "[0.0,)"
+ordering = "AFTER"
+side = "BOTH"
+
+[[dependencies.acx]]
+modId = "neoforge"
+type = "required"
+versionRange = "[${neoforge_version},)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.acx]]
+modId = "minecraft"
+type = "required"
+versionRange = "${minecraft_version_range}"
+ordering = "NONE"
+side = "BOTH"

@@ -39,6 +39,30 @@ public final class GoalSinks {
         clearer = c;
     }
 
+    private static volatile java.util.function.Function<UUID, String> statusFn;
+
+    /**
+     * RDD 登记「当前目标」查询器：接管后引擎侧 goal 被置空，
+     * {@code /goal} 无参要如实回报接管者手里正在跑什么。
+     */
+    public static void registerStatus(java.util.function.Function<UUID, String> s) {
+        statusFn = s;
+    }
+
+    /** 接管者手里的当前目标描述；没有接管者 / 未登记 / 查询出错 → null（调用方自行回落）。 */
+    public static String status(UUID companionId) {
+        java.util.function.Function<UUID, String> s = statusFn;
+        if (s == null || companionId == null) {
+            return null;
+        }
+        try {
+            return s.apply(companionId);
+        } catch (RuntimeException e) {
+            com.dwinovo.numen.Constants.LOG.error("[numen] 目标状态查询出错", e);
+            return null;
+        }
+    }
+
     /** 引擎在 {@code /goal X} 设定目标时调用。 */
     public static boolean dispatch(UUID companionId, String objective) {
         Sink s = sink;
@@ -72,5 +96,23 @@ public final class GoalSinks {
     /** 有没有接管者（供调试/日志）。 */
     public static boolean hasSink() {
         return sink != null;
+    }
+
+    /**
+     * 获取指定目标的描述文本。
+     * 用于引擎在设定目标时，向同伴同步目标的语义化描述。
+     */
+    public static String describe(UUID entityUuid) {
+        Sink s = sink;
+        if (s == null) {
+            return "";
+        }
+        // 委托给 sink 的实现类（通常是 RDD 插件的 GoalSink 实现）
+        try {
+            java.lang.reflect.Method m = s.getClass().getMethod("describe", UUID.class);
+            return (String) m.invoke(s, entityUuid);
+        } catch (Exception e) {
+            return "";
+        }
     }
 }

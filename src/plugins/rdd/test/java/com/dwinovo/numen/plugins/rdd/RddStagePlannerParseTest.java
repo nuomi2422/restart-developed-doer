@@ -71,7 +71,10 @@ class RddStagePlannerParseTest {
 
     @Test void capsAtMaxStages() {
         StringBuilder sb = new StringBuilder("{\"stages\":[");
-        for (int i = 0; i < RddChainFactory.MAX_STAGES + 5; i++) {
+        // ★ 17 与 12 都是字面量（契约：一级上限 12 条 / 灌 17 条逼出封顶），刻意不用 MAX_STAGES。
+        //   变异测试实测：写成常量时上限改了它跟着改，循环与断言一起漂，测试仍绿。
+        //   详见 RddRedlineContractPinTest。
+        for (int i = 0; i < 17; i++) {
             if (i > 0) {
                 sb.append(',');
             }
@@ -79,7 +82,7 @@ class RddStagePlannerParseTest {
         }
         sb.append("]}");
         List<PrimarySpec> stages = RddStagePlanner.parse(sb.toString());
-        assertEquals(RddChainFactory.MAX_STAGES, stages.size());
+        assertEquals(12, stages.size());
         assertEquals("阶段0", stages.get(0).description());
     }
 }

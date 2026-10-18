@@ -1,0 +1,91 @@
+{
+  "name": "ore_survey",
+  "description": "综合演示脚本：把前置检测(if/safety_check)、do_while 循环、嵌套 if、子 AC 调用、ignore_failure、跨步引用同时用上。DD 那 22 个 .ac 里没有一个同时用全这些。",
+  "tags": ["demo", "mining", "survey"],
+  "planner_notes": "本文件是 acx-core 的验收夹具，tools/build-and-test.ps1 会用它跑「真实 .ac 能否被 AcxLoader 全量加载」。同时演示 4 件事：①前置检测（safety_check + if 不满足就早退）②do_while 循环（条件源 scan_iter 在 body 里产生）③嵌套 if（按矿种分支）④子 AC 调用（block 直接写另一个 AC 名 + ignore_failure 让子 AC 失败不拖垮本体）。",
+  "safety_notes": "scan_iter 轮内 ignore_failure=true：某个坐标挖不动就把该目标拉黑换下一个，不 abort。三个子 AC（iron / diamond / coal）各自带 ignore_failure，互不影响。",
+  "steps": [
+    {
+      "id": "safety",
+      "block": "safety_check",
+      "params": { "avoid_liquids": true, "check_footing": true, "ledge_safety": true }
+    },
+    {
+      "id": "gate",
+      "block": "if",
+      "params": {
+        "condition": { "field": "$safety.safe", "op": "==", "value": true }
+      },
+      "children": [
+        {
+          "id": "survey",
+          "block": "while",
+          "params": {
+            "condition": { "field": "$scan_iter.done", "op": "==", "value": true },
+            "max_iters": 12,
+            "stagnant_limit": 3,
+            "do_while": true
+          },
+          "children": [
+            {
+              "id": "scan_iter",
+              "block": "scan_blocks",
+              "params": {
+                "targets": ["iron_ore", "deepslate_iron_ore", "diamond_ore", "coal_ore"],
+                "radius": 48,
+                "min_count": 1
+              }
+            },
+            {
+              "id": "go",
+              "block": "navigate_to",
+              "params": {
+                "x": "$prev.target_absX",
+                "y": "$prev.target_absY",
+                "z": "$prev.target_absZ",
+                "relative": false,
+                "ignore_failure": true
+              }
+            },
+            {
+              "id": "branch",
+              "block": "if",
+              "params": {
+                "condition": { "field": "$scan_iter.target_block", "op": "==", "value": "diamond_ore" }
+              },
+              "children": [
+                {
+                  "id": "mine_diamond",
+                  "block": "survey_diamond",
+                  "params": { "ignore_failure": true }
+                }
+              ]
+            },
+            {
+              "id": "branch_iron",
+              "block": "if",
+              "params": {
+                "condition": { "field": "$scan_iter.target_block", "op": "==", "value": "iron_ore" }
+              },
+              "children": [
+                {
+                  "id": "mine_iron",
+                  "block": "survey_iron",
+                  "params": { "ignore_failure": true }
+                }
+              ]
+            },
+            {
+              "id": "mine_rest",
+              "block": "mine_block",
+              "params": {
+                "block": "$scan_iter.target_block",
+                "ignore_failure": true
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

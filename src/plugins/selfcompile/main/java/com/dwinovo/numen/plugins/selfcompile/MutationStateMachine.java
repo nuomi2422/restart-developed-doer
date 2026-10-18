@@ -10,6 +10,8 @@ public final class MutationStateMachine {
     private static final Map<MutationState, EnumSet<MutationState>> NEXT = new EnumMap<>(MutationState.class);
 
     static {
+        NEXT.put(MutationState.PROPOSED, EnumSet.of(MutationState.REQUESTED, MutationState.WORKSPACE_CREATED,
+                MutationState.FAILED, MutationState.ARCHIVED, MutationState.STOP_LOSS));
         NEXT.put(MutationState.REQUESTED, EnumSet.of(MutationState.WORKSPACE_CREATED, MutationState.FAILED, MutationState.STOP_LOSS));
         NEXT.put(MutationState.WORKSPACE_CREATED, EnumSet.of(MutationState.GENERATED, MutationState.FAILED, MutationState.STOP_LOSS));
         NEXT.put(MutationState.GENERATED, EnumSet.of(MutationState.STATICALLY_CHECKED, MutationState.FAILED, MutationState.STOP_LOSS));

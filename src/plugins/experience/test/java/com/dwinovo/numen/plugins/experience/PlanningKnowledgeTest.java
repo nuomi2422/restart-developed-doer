@@ -75,7 +75,18 @@ class PlanningKnowledgeTest {
         assertFalse(sel.empty());
         assertTrue(sel.text().contains("exp:diamond"));
         assertTrue(sel.text().contains("VERIFIED"));
-        assertTrue(sel.text().contains("experience-abc.jsonl"), "必须带出处，供监测台核对");
+        /* ★ 这条断言原先写的是 contains("experience-abc.jsonl")，注释说「必须带出处，供监测台核对」。
+           2026-10-03 改掉了：**prompt 里不再渲染裸 UUID 文件名**（任务 3）。
+           而「供监测台核对」这件事本来就不靠 prompt 文本 ——
+           监测台读的是 planning_knowledge **事件**里的 sources[].origin
+           （ExperienceKnowledgeSource 里 src.put("origin", item.origin())），
+           那里仍然是原始文件名、仍能区分跨同伴串味。
+           ⇒ 这里改成断言「出处仍在，只是换成人话名」，观测侧那条由下面的
+             「观测那一侧仍保留原始文件名」钉住。 */
+        assertTrue(sel.text().contains("origin=该同伴亲历经验"),
+                "出处必须仍在正文里（换成人话名），实际：\n" + sel.text());
+        assertFalse(sel.text().contains("experience-abc.jsonl"),
+                "★ prompt 里不该再出现裸文件名，实际：\n" + sel.text());
         assertTrue(sel.text().contains("-58"));
     }
 
@@ -110,12 +121,17 @@ class PlanningKnowledgeTest {
                 item("exp:huge", PlanningKnowledge.Kind.EXPERIENCE, huge.toString(), "VERIFIED",
                         huge.toString(), huge.toString(), "experience-abc.jsonl", 1.0, "钻石"));
 
+        // 2026-10-07：默认字符预算提到 2400 后，单条 3×400 撑不满全局预算；
+        // 这里显式给一个 600 的小预算，继续验证「超预算 → 截断 + 标记」这条路径。
+        int budget = 600;
+        PlanningKnowledge.Request tight = new PlanningKnowledge.Request(
+                "钻石", "stage_b", List.of(), List.of(), PlanningKnowledge.DEFAULT_MAX_ITEMS, budget);
+
         // 检索词必须真能命中所选条目（否则会被相关性过滤挡掉，压根走不到截断这一步）
-        PlanningKnowledge.Selection sel = PlanningKnowledge.select(
-                request("钻石", "stage_b"), List.of(), hits);
+        PlanningKnowledge.Selection sel = PlanningKnowledge.select(tight, List.of(), hits);
 
         assertTrue(sel.gaps().contains("truncated"), "截断必须如实标记");
-        assertTrue(sel.text().length() <= PlanningKnowledge.DEFAULT_MAX_CHARS + TRUNCATION_MARKER_SLACK,
+        assertTrue(sel.text().length() <= budget + TRUNCATION_MARKER_SLACK,
                 "正文不得超出字符预算（含截断标记余量），实际 " + sel.text().length());
         assertTrue(sel.text().contains("已截断"));
     }
@@ -135,21 +151,32 @@ class PlanningKnowledgeTest {
         assertTrue(sel.chosen().size() <= 3, "条目数不得超过预算，实际 " + sel.chosen().size());
     }
 
-    // ---------- 排序：可信的优先 ----------
+    // ---------- 排序：相关度优先，同分才比成熟度 ----------
 
     @Test
-    void 成熟度高的排在前面() {
+    void 相关度高的排在前面_同分时成熟度高的在前() {
+        // 2026-10-07 用户实测缺陷：成熟度一票优先会把主人亲授路线（OBSERVED、高相关）
+        // 永远压在通用内建（GENERALIZED、弱相关）之后，短目标下挤不进预算 ——
+        // 表现就是"我注入的经验没用"。检索侧得分本身已按成熟度加权，故改为得分优先。
         List<PlanningKnowledge.Item> hits = List.of(
                 item("exp:observed", PlanningKnowledge.Kind.EXPERIENCE, "钻石观察", "OBSERVED",
                         "钻石", "听说", "experience-abc.jsonl", 99.0, "钻石"),
                 item("exp:verified", PlanningKnowledge.Kind.EXPERIENCE, "钻石验证", "VERIFIED",
                         "钻石", "实测可行", "experience-abc.jsonl", 1.0, "钻石"));
-        PlanningKnowledge.Request two = new PlanningKnowledge.Request(
+        PlanningKnowledge.Request one = new PlanningKnowledge.Request(
                 "钻石", "stage_b", List.of(), List.of(), 1, PlanningKnowledge.DEFAULT_MAX_CHARS);
 
-        PlanningKnowledge.Selection sel = PlanningKnowledge.select(two, List.of(), hits);
+        PlanningKnowledge.Selection byScore = PlanningKnowledge.select(one, List.of(), hits);
+        assertEquals("exp:observed", byScore.chosen().get(0).id(), "相关度优先于成熟度");
 
-        assertEquals("exp:verified", sel.chosen().get(0).id(), "成熟度优先于原始得分");
+        // 得分相同时，成熟度仍做裁决（信任没有被丢掉）
+        List<PlanningKnowledge.Item> tie = List.of(
+                item("exp:plain", PlanningKnowledge.Kind.EXPERIENCE, "钻石观察", "OBSERVED",
+                        "钻石", "听说", "experience-abc.jsonl", 5.0, "钻石"),
+                item("exp:trusted", PlanningKnowledge.Kind.EXPERIENCE, "钻石验证", "GENERALIZED",
+                        "钻石", "实测可行", "experience-abc.jsonl", 5.0, "钻石"));
+        PlanningKnowledge.Selection sameScore = PlanningKnowledge.select(one, List.of(), tie);
+        assertEquals("exp:trusted", sameScore.chosen().get(0).id(), "同分时成熟度高的在前");
     }
 
     @Test
@@ -263,5 +290,66 @@ class PlanningKnowledgeTest {
 
         assertNotNull(sel);
         assertTrue(sel.text().isEmpty());
+    }
+
+    // ---------- 出处的人话名（任务 3） ----------
+
+    /**
+     * ★ 本条钉的是「prompt 里不再出现裸 UUID 文件名」。
+     *
+     * <p>为什么这是问题：模型看到 {@code origin=experience-8d8d379b-…-307e22581f1f.jsonl}
+     * 既读不出信息、又占预算，还会让「这只同伴的经验」和「内置层」看起来像同类 ——
+     * 而它们的可信度完全不同。
+     */
+    @Test
+    void 出处渲染成人话名_prompt里不再出现裸UUID文件名() {
+        UUID mine = UUID.fromString("11111111-1111-1111-1111-111111111111");
+        ExperienceKnowledgeSource.ItemSupplier supplier = (companion, query, req) ->
+                List.of(item("exp:1", PlanningKnowledge.Kind.EXPERIENCE,
+                        "钻石经验", "VERIFIED", "钻石", "实测",
+                        "experience-" + mine + ".jsonl", 1.0, "钻石"));
+
+        PlanningKnowledge.Selection sel = ExperienceKnowledgeSource.recall(
+                mine, request("钻石", "stage_b"), supplier, List.of());
+
+        assertTrue(sel.text().contains("origin=该同伴亲历经验"),
+                "prompt 里的出处必须是人话名，实际：\n" + sel.text());
+        assertFalse(sel.text().contains(mine.toString()),
+                "★ prompt 里不该再出现裸 UUID 文件名，实际：\n" + sel.text());
+    }
+
+    /**
+     * ★ 反证：<b>观测那一侧必须还留着原始文件名</b>。
+     *
+     * <p>因为跨同伴串味时，监测台要靠 UUID 一眼看出是哪只同伴的经验库 ——
+     * 在数据层就换成「该同伴亲历经验」的话，两只同伴的来源会变得一模一样，
+     * 那个判据就一起没了。
+     */
+    @Test
+    void 观测那一侧仍保留原始文件名_否则监测台分不出跨同伴串味() {
+        UUID mine = UUID.fromString("11111111-1111-1111-1111-111111111111");
+        String raw = "experience-" + mine + ".jsonl";
+
+        /* 这一条钉的是「只改渲染层，没改数据层」：
+           ExperienceKnowledgeSource 造 Item 时仍把原始文件名放进 origin
+           （那里 src.put("origin", item.origin()) 写进 planning_knowledge 事件），
+           人话名只在 renderOne 里套一层。 */
+        assertEquals("该同伴亲历经验", PlanningKnowledge.humanOrigin(raw),
+                "渲染层要翻译");
+        /* 反证：humanOrigin 是纯函数，不改传入的字符串，也没有任何写回。 */
+        String copy = new String(raw.toCharArray());
+        PlanningKnowledge.humanOrigin(copy);
+        assertEquals(raw, copy, "humanOrigin 不许就地改参数");
+    }
+
+    /** 已经读得懂的来源名原样留着：不扩大改动面，builtin/mc-guide.md 不是噪音。 */
+    @Test
+    void 本来就读得懂的出处原样留着() {
+        assertEquals("builtin", PlanningKnowledge.humanOrigin("builtin"));
+        assertEquals("mc-guide.md", PlanningKnowledge.humanOrigin("mc-guide.md"));
+        /* 不认识的形状原样返回 —— 不编一个像模像样的名字。 */
+        assertEquals("some-future-source", PlanningKnowledge.humanOrigin("some-future-source"));
+        assertEquals("", PlanningKnowledge.humanOrigin(""));
+        assertEquals(null, PlanningKnowledge.humanOrigin(null));
     }
 }

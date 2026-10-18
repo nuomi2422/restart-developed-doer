@@ -49,6 +49,11 @@ public final class FailureClassifier {
                     "路径受阻：换路线/分层推进后继续", false);
             case TOOL_ERROR -> new RecoveryDecision(RecoveryOutcome.REPAIR,
                     "工具调用/参数问题：修正后重试", false);
+            // 2026-09-29：协商不是失败。执行层在干活途中认为方向不对并给了替代方案，
+            // 正确处置就是 REPLAN（换计划），绝不是 SELF_COMPILE（那是代码缺陷专用），
+            // 也不是 REPAIR（那是「按原计划补救」，恰恰是「军师不听」的旧症状）。
+            case NEGOTIATION -> new RecoveryDecision(RecoveryOutcome.REPLAN,
+                    "执行层协商：按士兵上报的替代方案重规划", false);
             case UNKNOWN -> ctx.repeatedFailure()
                     ? new RecoveryDecision(RecoveryOutcome.REPLAN, "未知原因且重复失败：重规划", false)
                     : new RecoveryDecision(RecoveryOutcome.REPAIR, "未知原因：先保守补救", false);

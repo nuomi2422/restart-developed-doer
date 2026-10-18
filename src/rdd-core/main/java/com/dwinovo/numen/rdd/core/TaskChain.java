@@ -19,9 +19,40 @@ public final class TaskChain {
     private Goal goal;
     private final Map<String, SubtaskStatus> statuses = new LinkedHashMap<>();
     private final Map<String, String> skipReasons = new LinkedHashMap<>();
+
+    /** 暂停原因：与 {@link #skipReasons} 对称，但语义相反（留着可开，不是放弃）。 */
+    private final Map<String, String> pauseReasons = new LinkedHashMap<>();
     private final Map<String, Integer> attempts = new LinkedHashMap<>();
+    /**
+     * {@code mode=acquire} 二级的<b>进入时基线</b>：二级 id → 该时刻各物品的持有量。
+     *
+     * <p>为什么挂在链上而不是 {@link Subtask} record：{@code Subtask} 是<b>计划规格</b>
+     * （由规划器生成、要进 prompt、能被 JSON 序列化）；baseline 是<b>运行时观察事实</b>，
+     * 宿主在二级真正激活的那一刻才知道。混进 record 会让"计划"被"执行观察"污染，
+     * 并把构造器/JSON/旧存档兼容面一次性放大。
+     *
+     * <p>为什么必须随链持久化：代次 {@code planRevision} 已经吃过一次"只在宿主内存里 →
+     * 重启撞号"的亏（见 {@link #adoptRevisionFromIds}）。baseline 若同样只活在内存，
+     * 重启后 {@code acquire} 会拿不到基线 —— 此时 {@link HardCodedEvaluator} 一律判 false，
+     * 已完成的二级会在重启后重新变成"没达成"。
+     */
+    private final Map<String, Map<String, Integer>> acquireBaselines = new LinkedHashMap<>();
     private int primaryIndex;
     private int subtaskIndex;
+    /**
+     * 计划代次（2026-09-30 深审 R05/codex P1）。
+     *
+     * <p>用途：让每次生成的二级 id 唯一。宿主生成 id 时拼上它（{@code primary-r{rev}-N}），
+     * 于是**上一轮计划留下的任何东西（迟到的协商回执、指标关联、旧 id 引用）都匹配不上新计划**。
+     *
+     * <p><b>为什么必须存在链里而不是宿主内存</b>（codex 复审抓出）：代次若只活在宿主的 Map，
+     * 停服就被清空，而磁盘上的链里 id 仍带着旧 rev —— 重启后第一次重规划从 rev=1 重新开始，
+     * 与磁盘上已有的 {@code primary-r1-0} **直接撞号**，隔离形同虚设。
+     * 放进 TaskChain 就随 {@code toJson/fromJson} 一起活过重启。
+     *
+     * <p>单调递增，永不回退。
+     */
+    private int planRevision;
     private PrimaryGoalStatus primaryStatus = PrimaryGoalStatus.PENDING;
     /** 当前二级最近一次绑定的宿主执行实例 id（P0-3 执行身份）；无执行绑定时为 null。 */
     private String activeExecutionId;
@@ -64,6 +95,76 @@ public final class TaskChain {
     public Goal goal() { return goal; }
     public synchronized PrimaryGoalStatus primaryStatus() { return primaryStatus; }
 
+    /** 当前计划代次（只增）。生成二级 id 时拼上它即可保证跨轮次唯一。 */
+    public synchronized int planRevision() { return planRevision; }
+
+    /**
+     * 主人暂停的原因前缀（2026-09-30 深审/codex P1-2）。
+     *
+     * <p>约定：凡以它开头的暂停都是<b>主人的明确指令</b>（「原地待命」），
+     * 与士兵自己说的 PAUSE（"我做不了，等条件变"）在治理上完全不同：
+     * 前者**永不过期、绝不自动恢复**、也不许被执行层的 COUNTER 推翻；
+     * 后者到期该催她换办法。
+     */
+    public static final String OWNER_PAUSE_PREFIX = "owner";
+
+    /** 主人下的暂停（{@link #pauseSubtask} 已校验 reason 非空）。 */
+    public static final String OWNER_PAUSE_REASON =
+            "owner: paused on request; resume only when the owner says so";
+
+    /** 这次暂停是不是主人下的（供宿主决定要不要被复评/协商打断）。 */
+    public synchronized boolean isOwnerPause(String subtaskId) {
+        String reason = pauseReasons.get(subtaskId);
+        return reason != null && reason.toLowerCase(java.util.Locale.ROOT).startsWith(OWNER_PAUSE_PREFIX);
+    }
+
+    /** 推进计划代次，返回新值。宿主在**每次生成/替换二级之前**调它。 */
+    public synchronized int nextPlanRevision() { return ++planRevision; }
+
+    /**
+     * 从链上<b>实际存在的二级 id</b> 反推代次下限（2026-09-30 深审/codex P1-1）。
+     *
+     * <p>为什么需要：planRevision 字段是这一轮才加的，**上一版存档里没有**。
+     * 而上一版生成的 id 已经是 {@code primary-r1-0} 这样的形状。
+     * 若恢复时把代次当成 0，那么重启后第一次重规划又从 rev=1 开始，
+     * 生成出与磁盘上<b>一模一样</b>的 id —— 旧回执的隔离就白做了。
+     *
+     * <p>所以扫一遍现存二级 id，取其中出现过的最大代次作为下限（不存在则保持原值）。
+     * 只增不减，永远不会把代次往回拨。
+     */
+    private void adoptRevisionFromIds() {
+        int floor = planRevision;
+        for (PrimaryGoal p : goal.primaryGoals()) {
+            for (Subtask s : p.subtasks()) {
+                int r = revisionOf(s.id());
+                if (r > floor) floor = r;
+            }
+        }
+        if (floor != planRevision) {
+            planRevision = floor;
+        }
+    }
+
+    /** 从二级 id 里读出代次；读不出（旧的 {@code -sN} 命名）返回 -1。 */
+    private static int revisionOf(String subtaskId) {
+        if (subtaskId == null) return -1;
+        int at = subtaskId.lastIndexOf("-r");
+        if (at < 0) return -1;
+        int end = at + 2;
+        int i = end;
+        while (i < subtaskId.length() && Character.isDigit(subtaskId.charAt(i))) {
+            i++;
+        }
+        if (i == end || i >= subtaskId.length() || subtaskId.charAt(i) != '-') {
+            return -1;   // 不是 "-r<数字>-" 形状
+        }
+        try {
+            return Integer.parseInt(subtaskId.substring(end, i));
+        } catch (NumberFormatException notANumber) {
+            return -1;
+        }
+    }
+
     /** 当前二级的状态；当前一级"已到达但未展开"（无二级可运行）时为 null。 */
     public synchronized SubtaskStatus currentSubtaskStatus() {
         Subtask s = currentSubtask();
@@ -80,8 +181,42 @@ public final class TaskChain {
     }
     public synchronized PrimaryGoal currentPrimary() { return goal.primaryGoals().get(primaryIndex); }
 
-    /** 当前一级的所有前置资产(waitFor)是否都被 counts 满足（无 waitFor → true）。 */
+    /**
+     * 当前一级的所有前置资产(waitFor)是否都被 counts 满足（无 waitFor → true）。
+     *
+     * <p>⚠️ 2026-09-27（用户指示）：**依赖门被临时删除**——一律返回 true，不再用 waitFor 拦一级。
+     * 理由：waitFor 一直牵制、影响推进，且逻辑不自洽（中间产物被消耗后门恒不满足 → 静默停）。
+     * waitFor 数据仍保留在链上（未删字段 / injectWaitFor 仍写），**需要时可恢复本方法原逻辑**
+     * （见 git 历史 / 经验库 issue/waiting-gate-silent-stall-no-supervision）。
+     */
     public synchronized boolean currentPrimaryReady(Map<String, Integer> counts) {
+        if (!dependencyGateEnabled) {
+            return true; // gate off (owner decision 2026-09-27): the chain must not self-lock
+        }
+        return dependencyGateSatisfied(counts);
+    }
+
+    /**
+     * 依赖门开关（2026-09-27 用户决定：先关掉，别让链自锁）。
+     *
+     * <p>做成开关而不是删代码：关掉只是**运行时行为**变了，拦截能力本身与它的契约测试
+     * 都还在（测试里 {@link #setDependencyGateEnabled(boolean)} 打开后照样验证"缺料就拦"）。
+     * 哪天要恢复门，只要把默认值改回 true 或在启动处打开，能力立刻回来。
+     */
+    private static volatile boolean dependencyGateEnabled = Boolean.getBoolean("rdd.dependencyGate");
+
+    /** 运行时开关依赖门（生产默认关；单测用它验证拦截能力仍在）。 */
+    public static void setDependencyGateEnabled(boolean enabled) {
+        dependencyGateEnabled = enabled;
+    }
+
+    /** 当前依赖门是否生效（诊断用：监测台/日志可读，避免"为什么没拦"变成灵异事件）。 */
+    public static boolean dependencyGateActive() {
+        return dependencyGateEnabled;
+    }
+
+    /** 依赖门本体（原本的判定逻辑；开关打开时才会被调用）。 */
+    private synchronized boolean dependencyGateSatisfied(Map<String, Integer> counts) {
         List<AssetRequirement> wf = currentPrimary().waitFor();
         if (wf.isEmpty()) return true;
         if (counts == null) return false;
@@ -140,6 +275,37 @@ public final class TaskChain {
         primaryStatus = PrimaryGoalStatus.ACTIVE;
         if (statuses.get(currentSubtask().id()) == SubtaskStatus.PENDING) {
             statuses.put(currentSubtask().id(), SubtaskStatus.RUNNING);
+            captureAcquireBaseline(currentSubtask().id(),
+                    registry == null ? null : registry.usableCounts());   // F5：激活即锁基线
+        }
+        return true;
+    }
+
+    /**
+     * 依赖门统一入口（P2-A 修正）：以 {@link PlanningAssetSnapshot} 为准。
+     *
+     * <p>为什么不是 {@code activateCurrentWithRegistry}：背包资产**不落盘**（P2-A 决策），
+     * 注册表里没有 {@code inventory_scan} 条目 → {@code registry.usableCounts()} 恒空 →
+     * 任何物品类 wait_for 永不满足（"背包明明有却不判定"）。快照的 {@code availableCounts()}
+     * 才是「实时扫描」的持有真相；world 资产仍由注册表另行提供（二级 world 条件走 RddWorldFacts）。
+     */
+    public synchronized boolean activateCurrentWithSnapshot(PlanningAssetSnapshot snapshot) {
+        if (primaryStatus != PrimaryGoalStatus.PENDING && primaryStatus != PrimaryGoalStatus.WAITING) {
+            throw new IllegalStateException("only a not-yet-started primary may activate: " + primaryStatus);
+        }
+        if (currentPrimary().unexpanded()) {
+            throw new IllegalStateException("current primary unexpanded; expandCurrentPrimary(...) before activation: "
+                    + currentPrimary().id());
+        }
+        Map<String, Integer> counts = snapshot == null ? null : snapshot.availableCounts();
+        if (!currentPrimaryReady(counts)) {
+            primaryStatus = PrimaryGoalStatus.WAITING;
+            return false;
+        }
+        primaryStatus = PrimaryGoalStatus.ACTIVE;
+        if (statuses.get(currentSubtask().id()) == SubtaskStatus.PENDING) {
+            statuses.put(currentSubtask().id(), SubtaskStatus.RUNNING);
+            captureAcquireBaseline(currentSubtask().id(), counts);   // F5：激活即锁基线
         }
         return true;
     }
@@ -155,6 +321,52 @@ public final class TaskChain {
         attempts.merge(currentSubtask().id(), 1, Integer::sum);
         activeExecutionId = null; // 新一轮执行，旧的宿主执行实例身份作废
         lastStartedAtMillis = System.currentTimeMillis();
+    }
+
+    /**
+     * 同 {@link #startCurrent()}，但在同一次 PENDING→RUNNING 迁移里额外锁一次 {@code acquire} 基线。
+     *
+     * <p><b>为什么必须有这个重载（2026-10-02 实测事故）。</b>基线原先只在
+     * {@link #activateCurrentWithSnapshot}（和 {@link #activateCurrentWithRegistry}）里拍，
+     * 而 {@code rdd_submit} 派活走的是 {@link #startCurrent()} 这条路 —— 那边一次都不拍。
+     * 后果：{@code rdd_submit} 建出来的链永远没有基线 →
+     * {@link HardCodedEvaluator} 的「无基线 = 未达成」分支让 {@code mode=acquire} <b>恒 false</b> →
+     * 合成/采集类任务<b>真的把东西做出来了也判不出成功</b> → 被 {@code RddStallWatcher} 当成卡死 →
+     * 判失败并逼模型把整件事重做一遍（实测：13:11:41 合成出石镐，13:12:45 判「stalled after nudges」，
+     * 13:13:04 又合成一把，背包里最后有 2 把）。
+     *
+     * <p>「激活」和「开跑」是同一个"派活之前"的时刻，两条路都必须锁基线。
+     * {@link #captureAcquireBaseline} 幂等（已有则不覆盖），所以重复调用安全。
+     *
+     * @param counts 此刻同伴的持有量；{@code null} 记空表（等价于「什么都有」，
+     *               后续 acquire 只能靠净增满足，比缺基线的恒 false 宽松）
+     */
+    public synchronized void startCurrentWithCounts(Map<String, Integer> counts) {
+        startCurrent();
+        captureAcquireBaseline(currentSubtask().id(), counts);
+    }
+
+    // ---- acquire baseline (mode=acquire 的运行时基线；见字段注释) ----
+
+    /**
+     * 捕获某二级的 {@code acquire} 基线（宿主在二级激活、开始派活**之前**调）。
+     *
+     * <p>幂等：已有基线时**不覆盖**（重试同一个二级不该把基线推到"已经做完"的位置，
+     * 否则 retry 后 {@code acquire} 永远判未达成）。
+     */
+    public synchronized void captureAcquireBaseline(String subtaskId, Map<String, Integer> counts) {
+        if (subtaskId == null || acquireBaselines.containsKey(subtaskId)) return;
+        acquireBaselines.put(subtaskId, counts == null ? Map.of() : Map.copyOf(counts));
+    }
+
+    /** 该二级的基线；没有则 null（宿主据此让 acquire 判未达成，而不是假装达成）。 */
+    public synchronized Map<String, Integer> acquireBaseline(String subtaskId) {
+        return subtaskId == null ? null : acquireBaselines.get(subtaskId);
+    }
+
+    /** 二级离开本轮生命周期（换计划/作废）时连同它的基线一起清掉，避免内存与存档堆积。 */
+    private void forgetAcquireBaseline(String subtaskId) {
+        acquireBaselines.remove(subtaskId);
     }
 
     /** P0-3 执行身份：宿主开始执行后把真实执行实例 id 绑到当前二级；重复绑定会置换旧 id。 */
@@ -266,6 +478,8 @@ public final class TaskChain {
         for (Subtask s : cur.subtasks()) {
             statuses.put(s.id(), SubtaskStatus.PENDING);
             skipReasons.remove(s.id());
+            pauseReasons.remove(s.id());
+            forgetAcquireBaseline(s.id());   // 重跑 = 上一轮的基线作废，否则 acquire 会永远判未达成
         }
         subtaskIndex = 0;
         primaryStatus = PrimaryGoalStatus.PENDING;
@@ -280,6 +494,41 @@ public final class TaskChain {
      * 时，由宿主/上层显式进入 REPLANNING；之后照旧走 {@link #replaceCurrentSubtasks(List)}（换新计划）
      * 或 {@link #resumeFromReplanning()}（重跑现有）。
      */
+    /**
+     * REPLANNING 入口（协商用）：士兵在**干活途中**（当前二级仍 RUNNING）认为计划不对、
+     * 主动上报 COUNTER/REJECT 时走这里。
+     *
+     * <p><b>为什么要有这个方法</b>（2026-09-29 定位到的真断点）：
+     * {@link #enterReplanningFromStuck(String)} 要求当前二级是 FAILED/STALLED，
+     * 但士兵唯一合理的上报时机恰恰是 <b>RUNNING</b>（还在干、觉得方向不对）。
+     * 于是协商请求走到 {@code RddPlugin.requestReplan} 时被
+     * {@code enterReplanningFromStuck} 抛异常挡掉，{@code return false}，
+     * 而 {@code soldierHint} 是在那之后才拼装的 —— 结果
+     * <b>士兵的建议永远送不到规划器</b>，实机表现为「说了好几次指挥官仍照原计划」。
+     * 更糟的是回执已被 {@code RddDetector.tickNegotiation} 先行消费，失败后无法恢复。
+     *
+     * <p><b>语义选择</b>：这里<b>不</b>把当前二级强转 FAILED（那会伪造一个"失败"事实、
+     * 污染达成判定与埋点），而是直接进入 REPLANNING。
+     * 当前二级状态在 {@link #replaceCurrentSubtasks(List)} / {@link #resumeFromReplanning()}
+     * 时按既有逻辑处理，行为与「从卡死进入」保持一致。
+     *
+     * @param reason 协商原因（原样进埋点与规划上下文）
+     * @throws IllegalStateException 链不处于可重规划状态时（与既有入口一致的失败语义）
+     */
+    public synchronized void enterReplanningFromNegotiation(String reason) {
+        if (primaryStatus != PrimaryGoalStatus.ACTIVE) {
+            throw new IllegalStateException("only an ACTIVE primary may enter replanning from negotiation: " + primaryStatus);
+        }
+        if (currentPrimary().unexpanded()) {
+            throw new IllegalStateException("unexpanded primary cannot enter replanning from negotiation: " + currentPrimary().id());
+        }
+        if (currentSubtask() == null) {
+            throw new IllegalStateException("no current subtask to replan from negotiation");
+        }
+        primaryStatus = PrimaryGoalStatus.REPLANNING;
+        clearExecutionMetadata();
+    }
+
     public synchronized void enterReplanningFromStuck(String reason) {
         if (primaryStatus != PrimaryGoalStatus.ACTIVE) {
             throw new IllegalStateException("only an ACTIVE primary may enter replanning from stuck: " + primaryStatus);
@@ -324,7 +573,9 @@ public final class TaskChain {
         for (String freedId : freed) {
             statuses.remove(freedId);
             skipReasons.remove(freedId);
+            pauseReasons.remove(freedId);
             attempts.remove(freedId);
+            forgetAcquireBaseline(freedId);
         }
         for (Subtask s : generated) {
             statuses.put(s.id(), SubtaskStatus.PENDING);
@@ -430,6 +681,53 @@ public final class TaskChain {
         return Map.copyOf(statuses);
     }
 
+    /**
+     * 暂停当前二级：<b>不开始、留着、以后还能开</b>。
+     *
+     * <p>与 {@link #skipSubtask} 的关键差别是<b>不推进</b>——skip 立刻 {@code advanceOrAwait()} 走到下一个，
+     * 而暂停原地不动：既不消耗重试预算，也不进 FAILED 的能力缺口/失败升级循环。
+     * 规划器改主意时用 {@link #resumeFromPaused} 原地开回来。
+     *
+     * <p>之所以值得单列一个状态而不是复用 STALLED/FAILED：
+     * STALLED 会被监督判成卡死并最终 markFailed（记忆库 {@code issue/waiting-gate-silent-stall-no-supervision}：
+     * "没进展"与"故意不做"混在一起就会催工、逼它去干本来就不该干的事）；
+     * FAILED 会走重试与能力缺口。两者都会破坏"先放着"这个意图。
+     * <p>允许从 <b>STALLED</b> 暂停（2026-09-29 实机修正）：士兵察觉"我做不到"的那一刻，
+     * 二级通常<b>已经是 STALLED</b>（做不到 → 资产无变化 → 15 秒 grace → 判卡死）。
+     * 最初只放行 RUNNING/PENDING，结果实机第一跑就落到
+     * {@code subtask_pause_rejected: cannot be paused from STALLED} → 白白退回重规划。
+     * 「卡住 + 承认做不到」= 正该被按住，而不是被判失败后继续烧重试预算。
+     */
+    public synchronized void pauseSubtask(String subtaskId, String reason) {
+        requireCurrent(subtaskId);
+        if (primaryStatus != PrimaryGoalStatus.ACTIVE) throw new IllegalStateException("primary not active");
+        SubtaskStatus st = statuses.get(subtaskId);
+        if (st != SubtaskStatus.RUNNING && st != SubtaskStatus.PENDING && st != SubtaskStatus.STALLED) {
+            throw new IllegalStateException("current subtask cannot be paused from " + st);
+        }
+        if (reason == null || reason.isBlank()) throw new IllegalArgumentException("pause reason required");
+        statuses.put(subtaskId, SubtaskStatus.PAUSED);
+        pauseReasons.put(subtaskId, reason);
+        clearExecutionMetadata(); // 暂停 = 不再有在途执行，旧执行身份/启动时间作废
+    }
+
+    /** 规划器改主意 → 把暂停的当前二级原地开回来（PAUSED → RUNNING，可直接续跑）。 */
+    public synchronized void resumeFromPaused(String subtaskId) {
+        requireCurrent(subtaskId);
+        if (statuses.get(subtaskId) != SubtaskStatus.PAUSED) throw new IllegalStateException("current subtask is not paused");
+        statuses.put(subtaskId, SubtaskStatus.RUNNING);
+        pauseReasons.remove(subtaskId);
+    }
+
+    /** 只读：某二级是否处于暂停（监测台/规划器快照用，不改状态）。 */
+    public synchronized boolean isPaused(String subtaskId) {
+        return statuses.get(subtaskId) == SubtaskStatus.PAUSED;
+    }
+
+    public synchronized Map<String, String> pauseReasonsView() {
+        return Map.copyOf(pauseReasons);
+    }
+
     /** Read-only structured view for monitoring; it is derived from the state owner. */
     public synchronized Map<String, Object> snapshot() {
         List<Map<String, Object>> primaries = new ArrayList<>();
@@ -443,6 +741,7 @@ public final class TaskChain {
                 item.put("description", subtask.description());
                 item.put("status", statuses.get(subtask.id()).name());
                 if (skipReasons.containsKey(subtask.id())) item.put("skipReason", skipReasons.get(subtask.id()));
+                if (pauseReasons.containsKey(subtask.id())) item.put("pauseReason", pauseReasons.get(subtask.id()));
                 item.put("detectionMode", subtask.detectionMode().name());
                 item.put("condition", subtask.condition());
                 item.put("current", p == primaryIndex && s == subtaskIndex);
@@ -494,7 +793,9 @@ public final class TaskChain {
         }
         o.add("statuses", st);
         o.add("skipReasons", GSON.toJsonTree(skipReasons));
+        o.add("pauseReasons", GSON.toJsonTree(pauseReasons));
         o.add("attempts", GSON.toJsonTree(attempts));
+        o.add("acquireBaselines", GSON.toJsonTree(acquireBaselines));
         JsonArray sat = new JsonArray();
         for (String k : satisfiedStages) {
             sat.add(k);
@@ -502,6 +803,7 @@ public final class TaskChain {
         o.add("satisfiedStages", sat);
         o.addProperty("primaryIndex", primaryIndex);
         o.addProperty("subtaskIndex", subtaskIndex);
+        o.addProperty("planRevision", planRevision);
         o.addProperty("primaryStatus", primaryStatus.name());
         o.addProperty("lastStartedAtMillis", lastStartedAtMillis);
         if (activeExecutionId != null) o.addProperty("activeExecutionId", activeExecutionId);
@@ -540,6 +842,12 @@ public final class TaskChain {
         }
         chain.primaryIndex = o.get("primaryIndex").getAsInt();
         chain.subtaskIndex = o.get("subtaskIndex").getAsInt();
+        // 旧链（无 planRevision 字段）= 0。**但不能真的当 0**：
+        // 上一版存档的二级 id 已经是 `primary-r1-0` 这种带代次的形状，
+        // 重启后第一次重规划又从 rev=1 开始 → 直接撞号，旧回执又能混进来。
+        // 所以从磁盘上**实际存在的二级 id 反推一个下限**（见 adoptRevisionFromIds）。
+        chain.planRevision = o.has("planRevision") ? o.get("planRevision").getAsInt() : 0;
+        chain.adoptRevisionFromIds();
         chain.primaryStatus = PrimaryGoalStatus.valueOf(o.get("primaryStatus").getAsString());
         if (o.has("skipReasons") && o.get("skipReasons").isJsonObject()) {
             // 全量载入（不做加载期过滤）：skipReason 指向非 SKIPPED/未知二级属于损坏数据，
@@ -548,10 +856,33 @@ public final class TaskChain {
                 chain.skipReasons.put(entry.getKey(), entry.getValue().getAsString());
             }
         }
+        // 旧存档（PAUSED 引入前写出的 JSON）没有这个键 —— 缺失即空，不算损坏。
+        if (o.has("pauseReasons") && o.get("pauseReasons").isJsonObject()) {
+            for (var entry : o.getAsJsonObject("pauseReasons").entrySet()) {
+                chain.pauseReasons.put(entry.getKey(), entry.getValue().getAsString());
+            }
+        }
         if (o.has("attempts") && o.get("attempts").isJsonObject()) {
-            JsonObject att = o.getAsJsonObject("attempts");
-            for (String k : att.keySet()) {
+            JsonObject att = o.getAsJsonObject("attempts");            for (String k : att.keySet()) {
                 chain.attempts.put(k, att.get(k).getAsInt());
+            }
+        }
+        // acquire 基线（2026-09-30）：旧存档没有这个键 = 从没捕获过基线 → 空。
+        // 语义后果是"acquire 判未达成"，**不是**损坏：重启后由宿主重新捕获，
+        // 而不是拿一个错的基线判出假的完成。
+        if (o.has("acquireBaselines") && o.get("acquireBaselines").isJsonObject()) {
+            for (var entry : o.getAsJsonObject("acquireBaselines").entrySet()) {
+                JsonObject counts = entry.getValue().isJsonObject() ? entry.getValue().getAsJsonObject() : null;
+                if (counts == null) continue;
+                Map<String, Integer> baseline = new LinkedHashMap<>();
+                for (var c : counts.entrySet()) {
+                    try {
+                        baseline.put(c.getKey(), c.getValue().getAsInt());
+                    } catch (RuntimeException malformed) {
+                        throw new IllegalArgumentException("malformed acquireBaseline for " + entry.getKey(), malformed);
+                    }
+                }
+                chain.acquireBaselines.put(entry.getKey(), Map.copyOf(baseline));
             }
         }
         if (o.has("lastStartedAtMillis")) {
@@ -622,6 +953,21 @@ public final class TaskChain {
             }
             if (statuses.get(id) != SubtaskStatus.SKIPPED) {
                 throw new IllegalArgumentException("restored skipReason on non-skipped subtask: " + id);
+            }
+        }
+        for (String id : pauseReasons.keySet()) {
+            if (!expected.contains(id)) {
+                throw new IllegalArgumentException("restored pauseReason references unknown subtask: " + id);
+            }
+            if (statuses.get(id) != SubtaskStatus.PAUSED) {
+                throw new IllegalArgumentException("restored pauseReason on non-paused subtask: " + id);
+            }
+        }
+        // 基线表只做"引用完整性"校验：不许指向不存在的二级（那会让基线永远查不到、acquire 卡死）。
+        // 注意**不**校验"该二级必须正在跑"——重试/暂停期间基线继续存在是合法的。
+        for (String id : acquireBaselines.keySet()) {
+            if (!expected.contains(id)) {
+                throw new IllegalArgumentException("restored acquireBaseline references unknown subtask: " + id);
             }
         }
         PrimaryGoal current = goal.primaryGoals().get(primaryIndex);

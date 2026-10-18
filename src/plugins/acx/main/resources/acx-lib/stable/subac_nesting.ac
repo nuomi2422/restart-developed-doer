@@ -1,0 +1,28 @@
+{
+  "name": "subac_nesting",
+  "version": "1",
+  "description": "主 AC 把「扫矿+复核」整段委托给子 AC ore_scan_inspect，再读一次自身状态收尾。",
+  "tags": [
+    "demo",
+    "subac"
+  ],
+  "planner_notes": "子 AC 名出现在 step.block 上；执行器先查子 AC 目录再查积木表，同名会走子 AC。",
+  "safety_notes": "全链路只读。",
+  "steps": [
+    {
+      "id": "read",
+      "block": "get_self_status",
+      "params": {}
+    },
+    {
+      "id": "delegated",
+      "block": "ore_scan_inspect",
+      "params": {}
+    },
+    {
+      "id": "read2",
+      "block": "get_self_status",
+      "params": {}
+    }
+  ]
+}

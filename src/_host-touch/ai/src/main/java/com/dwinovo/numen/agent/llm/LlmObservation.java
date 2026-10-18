@@ -25,6 +25,22 @@ public final class LlmObservation {
         this.sink = sink;
     }
 
+    /**
+     * 这条观察属于哪个同伴 —— {@link LlmActivity} 靠它认领身份。
+     *
+     * <p>存在的理由：{@link NumenLlmClient} 是无状态共享的，一次调用它并不知道自己属于谁；
+     * 而它是穿过 {@code chatStreaming(..., observation)} 的唯一身份载体，
+     * 所以按同伴聚合「在飞」状态<b>不需要改任何调用方</b>。
+     */
+    public String companionId() {
+        return companionId;
+    }
+
+    /** 本次调用的相位（execution / goal_judging / compaction / …），仅用于观测归因。 */
+    public String phase() {
+        return phase;
+    }
+
     void publish(String type, String model, Map<String, ?> fields, String secret) {
         try {
             Map<String, Object> data = new LinkedHashMap<>();

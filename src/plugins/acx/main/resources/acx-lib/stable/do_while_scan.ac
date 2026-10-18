@@ -1,0 +1,54 @@
+{
+  "name": "do_while_scan",
+  "version": "1",
+  "description": "do_while=true 时循环体先跑一轮再判条件；条件恒真所以跑满 max_iters 后 PAUSED（断点停在 while 自己）。",
+  "tags": [
+    "demo",
+    "loop"
+  ],
+  "planner_notes": "DD 是靠「同名 step 覆盖输出」实现这个语义（隐式且会撞名），我们改成显式 do_while。",
+  "safety_notes": "只读扫描。",
+  "steps": [
+    {
+      "id": "scan",
+      "block": "scan_blocks",
+      "params": {
+        "block_ids": [
+          "minecraft:iron_ore"
+        ],
+        "radius": 8
+      }
+    },
+    {
+      "id": "loop",
+      "block": "while",
+      "params": {
+        "do_while": true,
+        "condition": {
+          "field": "$scan.matches",
+          "op": "!=",
+          "value": null
+        },
+        "max_iters": 2,
+        "stagnant_limit": 1000
+      },
+      "children": [
+        {
+          "id": "scan_again",
+          "block": "scan_blocks",
+          "params": {
+            "block_ids": [
+              "minecraft:iron_ore"
+            ],
+            "radius": 8
+          }
+        }
+      ]
+    },
+    {
+      "id": "tail",
+      "block": "get_self_status",
+      "params": {}
+    }
+  ]
+}

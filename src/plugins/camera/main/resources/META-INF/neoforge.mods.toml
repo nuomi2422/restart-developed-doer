@@ -1,0 +1,29 @@
+modLoader = "javafml"
+loaderVersion = "${neoforge_loader_version_range}"
+license = "${license}"
+
+[[mods]]
+modId = "numencam"
+version = "${version}"
+displayName = "Numen Camera Rig"
+authors = "dwinovo"
+description = '''Client-side companion camera rig. Bind a companion, switch shot modes from the in-game /cam command, get teleported to it when it walks out of your loaded area, speed up your own movement, and record frames to PNG/mp4.'''
+
+# 混合配置：MixinCamera 接管 net.minecraft.client.Camera#setup。
+# 配置里的 "client" 段保证它只在逻辑客户端注入。
+[[mixins]]
+config = "numencam.mixins.json"
+
+[[dependencies.numencam]]
+modId = "neoforge"
+type = "required"
+versionRange = "[${neoforge_version},)"
+ordering = "NONE"
+side = "CLIENT"
+
+[[dependencies.numencam]]
+modId = "minecraft"
+type = "required"
+versionRange = "${minecraft_version_range}"
+ordering = "NONE"
+side = "CLIENT"

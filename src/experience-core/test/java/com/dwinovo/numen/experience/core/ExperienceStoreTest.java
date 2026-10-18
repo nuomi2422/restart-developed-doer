@@ -162,4 +162,114 @@ class ExperienceStoreTest {
         assertEquals(1, r.size());
         assertEquals(e.id(), r.all().get(0).id());
     }
+
+    // ===== B1（2026-10-02）：兼容「.jsonl 后缀但内容是整个 JSON 数组」的遗留形状 =====
+    //
+    // 病根：早期版本把整个数组写进 .jsonl 文件（文件只有 1 行）。读取端原先只认逐行
+    // JSONL，对数组调 getAsJsonObject() 抛 IllegalStateException，被 catch(RuntimeException)
+    // 静默吞掉 ⇒ mirror 为空 ⇒ 注入侧 total()==0 ⇒ 经验正文一条都进不了上下文。
+    // 同类坑 MemoQueue 在 2026-09-29 已修，经验库当时漏了。
+
+    /** 造一个「.jsonl 后缀但内容是整个数组」的遗留文件。 */
+    private Path writeLegacyArrayFile(String name, List<ExperienceEntry> entries) throws Exception {
+        Path file = dir.resolve(name);
+        StringBuilder sb = new StringBuilder("[");
+        for (int i = 0; i < entries.size(); i++) {
+            if (i > 0) {
+                sb.append(',');
+            }
+            sb.append(entries.get(i).toJson().toString());
+        }
+        sb.append(']');
+        java.nio.file.Files.writeString(file, sb.toString(),
+                java.nio.charset.StandardCharsets.UTF_8);
+        return file;
+    }
+
+    @Test
+    void readsLegacyArrayShapedJsonl() throws Exception {
+        ExperienceStore seed = ExperienceStore.at(dir.resolve("seed-src.jsonl"));
+        ExperienceEntry a = seed.learn(entry("遗留一"));
+        ExperienceEntry b = seed.learn(entry("遗留二"));
+        Path file = writeLegacyArrayFile("legacy-array.jsonl", List.of(a, b));
+
+        ExperienceStore r = ExperienceStore.at(file);
+        assertEquals(2, r.size(), "遗留数组形状必须能读出来");
+        assertEquals(a.id(), r.all().get(0).id());
+
+        ExperienceStore.LoadStats s = r.loadStats();
+        assertEquals(2, s.loadedLegacy(), "应记为 legacy 而不是 line");
+        assertEquals(0, s.loadedLine());
+        assertEquals(0, s.loadedFailed());
+        assertEquals(2, s.total());
+        assertEquals(true, s.needsMigrate());
+    }
+
+    @Test
+    void normalJsonlStillReadsAsLine() throws Exception {
+        // 回退保护：正常逐行 JSONL 不能被误判成 legacy。
+        ExperienceStore w = ExperienceStore.at(dir.resolve("normal.jsonl"));
+        w.learn(entry("正常一条"));
+        w.learn(entry("正常两条"));
+
+        ExperienceStore r = ExperienceStore.at(dir.resolve("normal.jsonl"));
+        assertEquals(2, r.size());
+        ExperienceStore.LoadStats s = r.loadStats();
+        assertEquals(2, s.loadedLine());
+        assertEquals(0, s.loadedLegacy(), "正常 JSONL 不该被当成遗留形状");
+        assertEquals(false, s.needsMigrate());
+    }
+
+    @Test
+    void countsFailedEntriesInsteadOfHidingThem() throws Exception {
+        Path file = dir.resolve("half-broken.jsonl");
+        ExperienceStore w = ExperienceStore.at(file);
+        w.learn(entry("好的那条"));
+        java.nio.file.Files.writeString(file, "{\"id\":\"x\",\"title\":",
+                java.nio.charset.StandardCharsets.UTF_8, java.nio.file.StandardOpenOption.APPEND);
+
+        ExperienceStore r = ExperienceStore.at(file);
+        assertEquals(1, r.size(), "坏的跳过，好的还在");
+        assertEquals(1, r.loadStats().loadedFailed(), "失败必须被记成可见的数，不能只有一行日志");
+        assertEquals(true, r.loadStats().degraded());
+    }
+
+    @Test
+    void migrateLegacyShapeIsIdempotentAndBacksUpOnce() throws Exception {
+        ExperienceStore seed = ExperienceStore.at(dir.resolve("mig-src.jsonl"));
+        ExperienceEntry a = seed.learn(entry("迁移一"));
+        ExperienceEntry b = seed.learn(entry("迁移二"));
+        Path file = writeLegacyArrayFile("migrate-me.jsonl", List.of(a, b));
+
+        ExperienceStore r = ExperienceStore.at(file);
+        assertEquals(2, r.migrateLegacyShape(), "迁移应返回条数");
+
+        // 迁移后应是逐行 JSONL：两个新实例读都走正常路径
+        ExperienceStore again = ExperienceStore.at(file);
+        assertEquals(2, again.size());
+        assertEquals(0, again.loadStats().loadedLegacy(), "迁完就不该还需要迁移");
+        assertEquals(2, again.loadStats().loadedLine());
+        assertEquals(a.id(), again.all().get(0).id());
+        assertEquals(b.id(), again.all().get(1).id());
+
+        // 再迁一次：不应重复备份、不应丢条目
+        assertEquals(2, r.migrateLegacyShape());
+        long backups = java.nio.file.Files.list(dir)
+                .filter(p -> p.getFileName().toString().startsWith("migrate-me.jsonl.pre-migrate-"))
+                .count();
+        assertEquals(1, backups, "同一文件的迁移备份只应有一份");
+        assertEquals(2, ExperienceStore.at(file).size(), "条目不能丢");
+    }
+
+    @Test
+    void singleObjectFileIsAlsoTreatedAsLegacy() throws Exception {
+        ExperienceStore seed = ExperienceStore.at(dir.resolve("single-src.jsonl"));
+        ExperienceEntry a = seed.learn(entry("单条"));
+        Path file = dir.resolve("single.jsonl");
+        java.nio.file.Files.writeString(file, a.toJson().toString(), java.nio.charset.StandardCharsets.UTF_8);
+
+        ExperienceStore r = ExperienceStore.at(file);
+        assertEquals(1, r.size(), "整个文件只有一条也要能读");
+        assertEquals(1, r.loadStats().loadedLegacy());
+    }
 }

@@ -1,99 +1,123 @@
-# restart-developed-doer
+# restart-developed-doer（RDD）
 
-> **这是一个开源工程，不是 Mod**：一套住在 Minecraft 里的 **AI Agent Runtime / 自编译系统**——
-> AI 自主玩游戏、任务链监督、经验沉淀、缺能力自编译补上，全程可观测可验证。
+> **这是一个开源工程，不是 Mod。**
+> 一套「住在 Minecraft 里的 **AI Agent Runtime / 自编译系统**」——
+> AI 自主玩游戏、任务链监督、经验沉淀、世界观测、缺能力时自编译补上，**全程可观测、可验证**。
 
----
-
-## 📇 改动索引 & 完成状态（先看这里）
-
-- **对宿主改动极小**：280 个改动文件里 **227 个是我们新增的自有代码**，真正改 Numen 已有文件的只有 **44 处**（assist 模式 + 观测埋点 + 构建，全部叠加扩展，不动宿主核心语义）。
-- **完成状态**：监测台 ✅ ｜ AC 执行 ✅ ｜ RDD 任务链 ✅ ｜ Self-Compile ✅ ｜ **expmem ⚠️ 部分完成**（词法检索✅，语义检索依赖外部 BGE embedding + 灵魂核心向量索引，详见下）
-- 完整清单：**[`docs/MODIFICATIONS-INDEX.md`](docs/MODIFICATIONS-INDEX.md)**（索引）｜ **[`MODIFICATIONS.md`](MODIFICATIONS.md)**（逐模块交代）｜ **patch**：[`patches/heartpact-modifications.patch`](patches/heartpact-modifications.patch)
-- 能力评估（诚实自评：极限/天花板/外部评判/提升路线）：**[`docs/CAPABILITY-ASSESSMENT.md`](docs/CAPABILITY-ASSESSMENT.md)**
-- 纯自有代码仓库：[**restart-developed-doer-core**](https://github.com/nuomi2422/restart-developed-doer-core)（去掉宿主 patch 视角，只看我们自己的代码）
+<p align="center"><b>宿主</b>： <a href="https://github.com/Dwinovo/minecraft-numen">Numen</a>（NeoForge 1.21.1）　·　来源：<a href="https://github.com/nuomi2422/minecraft-numen">我们的宿主 fork（redline-1）</a></p>
 
 ---
 
-## ⚠️ 借用宿主声明（Important）
+## 0 · 一句话
 
-本项目**暂时借用** [Numen](https://github.com/Dwinovo/minecraft-numen)（NeoForge 1.21.1 的 AI 同伴宿主）作为运行宿主。
+**军师（任务链）给目标 → 将军（内置 AI）自主执行 → 监测台监察 → 卡死时拍醒 → 缺工具自编译补上。**
 
-- Numen 是**其原作者的开源项目**，本项目**不包含 Numen 原版源码**（需按原项目自行构建部署）；
-- 本项目在 Numen 之上构建**五大模块化系统**，经 `Adapter / Port` 与宿主隔离——未来宿主可替换为任意 AI / 环境执行系统；
-- 本仓库含**本项目自有源码**（`src/`：ac-api/ac-core/rdd-core/experience-core + plugins/* 共 206 Java 文件，外加 `src/_host-touch/` 里 18 个住在宿主模块路径下的接缝文件，依赖 Numen 编译）+ 监测台 + 架构文档 + 编排脚本 + 对宿主的改动 patch。
-
----
-
-## 北极星（首要目标）
-
-> 让一个 AI 同伴在 Minecraft 里**从零自主完成复杂任务**（挖钻石 / 铁甲全链），
-> 全程可监督、可验证、能力缺失时**自编译补上**——不是"会玩 MC 的 NPC"，而是**自主 Agent Runtime**。
-
-一句话：**军师（任务链）给目标 → 将军（内置 AI）自主执行 → 监测台监察 → 卡死时拍醒 → 缺工具自编译生成。**
+不是"会玩 MC 的 NPC"，而是**自主 Agent Runtime**：由外部 AI 工程闭环（写码 / 编译 / 进游戏实测 / 取证）
+不断给它加能力。北极星是让同伴**从零自主完成复杂任务**（挖钻石 / 铁甲全链 / 村庄安家），并**自我进化**。
 
 ---
 
-## 五大系统（模块化，各自独立）
+## 1 · 借宿主声明（Important）
 
-| # | 系统 | 定位 | 观测出口 |
-|---|---|---|---|
-| 1 | **监测台**（monitoring-station/） | 实时观测 AI 思考/工具/任务/经验/架构文档 | — |
-| 2 | **AC 执行** | 多步脚本引擎：底层工具组合成高层调用（降费） | ac.jsonl |
-| 3 | **RDD 任务链** | 目标分解 + 资产检测 + **卡死监督**（STALLED→拍醒→恢复） | rdd.jsonl |
-| 4 | **expmem 经验** ⚠️ | learn/recall/verify 经验记忆（词法检索✅；语义检索依赖外部 BGE embedding + 灵魂核心向量索引，未做） | expmem.jsonl |
-| 5 | **Self-Compile** | 生成工具→编译→部署→生效（自变异） | ai.jsonl |
+本项目**借用** [Numen](https://github.com/Dwinovo/minecraft-numen) 作为运行宿主。
 
-> 五大系统的纯 JVM 核心在 Numen 仓库（ac-core/rdd-core/experience-core/plugins/*），
-> 本仓库收录的是：监测台 + 架构决策文档 + 外部自编译编排脚本（脚本会指引你拉取并构建宿主）。
+- Numen 是**其原作者的开源项目**，本仓**不包含 Numen 原版源码**（需按上游自行拉取/构建）。
+- 本项目在 Numen 之上搭一层**模块化扩展系统**，经公共 API / `Adapter·Port` 与宿主隔离——
+  未来宿主可替换为任意 AI / 环境执行系统。
+- 本仓收录：**自有源码**（`src/`）+ **对宿主的改动 patch**（`patches/`）+ 架构文档 + 编排脚本 + 监测台。
 
----
-
-## 能完成什么（全部真机验证 2026-08-31）
-
-- ⛏️ **空手挖钻石**：大型任务全链，rdd 背包实测 **diamond:9**
-- 🕐 **卡死监督**：STALLED→拍醒→恢复全周期（真实日志 11:12:46→11:13:17）
-- 🧬 **自编译闭环**：缺工具→生成→部署→生效（rdd_get_inventory MCP 真实返回）
-- 💰 **AC 降费**：1 次 ac_execute 顶 3 次底层工具，AI 自主学会用
-- 💾 **可恢复**：RDD 任务链 / AC 库落盘，游戏重启自动恢复
-- 🧭 **升级路径**：Level 1 卡死→Level 2 重试→Level 3 能力不足→自编译引导，全触发验证
-
-> 📄 **完整成果与原始日志**：见 [`docs/REAL-VERIFICATION-RESULTS.md`](docs/REAL-VERIFICATION-RESULTS.md)（10 项成果逐条带证据）
+### 我们对宿主改了什么？
+- **新增的接缝文件**（必须住在宿主包路径下的，59 个）→ [`src/_host-touch/`](src/_host-touch/)。
+- **改动宿主已有文件的差分**（146 个文件的 diff）→ [`patches/numen-host-modifications.patch`](patches/numen-host-modifications.patch)。
+- 逐模块交代见 [`MODIFICATIONS.md`](MODIFICATIONS.md)（含回滚方式）。
 
 ---
 
-## 怎么用
+## 2 · 架构（三层，按耦合度分）
+
+| 层 | 内容 | 与宿主的耦合 |
+|---|---|---|
+| **① 纯 JVM core**（`src/*-core/`） | `rdd-core`（任务链/资产）、`experience-core`（经验记忆）、`settlement-core`（基地/设施）、`world-state-core`（世界观测） | **零**：不依赖 Minecraft / Numen，可独立发 maven 坐标、可离线单测 |
+| **② 插件**（`src/plugins/`） | `rdd` `learner` `acx` `experience` `camera` `settlement` `worldstate` `selfcompile` | **低**：走 `NumenGateway` / 公共 API 注册能力 |
+| **③ 工程闭环**（宿主之外） | 编译→部署→进游戏→MCP 驱动→读监测台取证的自动化编排 | **无**：完全在宿主外 |
+
+> `acx` = AC 执行层**新代**（非线性控制流/前置条件/参数映射/生命周期）；第一代 `ac` 已删。
+
+---
+
+## 3 · 能做什么（实机验证过的，如实列）
+
+### 3.1 世界观测 V1 —— 实机验收 11/11（2026-10-18，live/ACX）
+`world_state` 工具：读不扫描、零/部分/未加载区分、`STALE`/`HISTORICAL` 新鲜度、
+有界实体计数、**预算明确拒绝**（`BUDGET_EXCEEDED`）、按世界隔离落盘、
+监测事件、**重启保留历史 → 刷新回当前**。四条红线 + 读/取分离全部成立。
+
+### 3.2 任务链 / 学习闭环（2026-10-05 ~ 10-06，live）
+- 目标分解 → 重规划 → **首次观测到 `requirements_met` 与整级 `goal_completed`**；
+- **内脑自己写结构化经验**（七字段填 6、priority 90）；
+- 容器/熔炉：`inspect_gui` + `transfer` + `close_gui`、`set_timer` 管等待；
+- **死亡恢复 + 捡包**：跑回死亡点把 104 原铁全捡回；
+- 自主 COUNTER/REJECT 不可行子任务、自设定时器、按需加载技能。
+
+### 3.3 自编译闭环（期 2，2026-08-31）
+AI 生成 `RddWhereamiTool` → 落盘登记 → 编译打包 → 部署重启 → MCP 真实调用返回真实坐标。
+
+### 3.4 尚未验证 / 盲点（照实写）
+AC **自写**能力未验证；新经验「按任务召回→采用→改变重规划」未证明（存储✓ 浮现✓ 采用✗）；
+农田/交易/自动挖铁 AC 无验收证据；放置选位、不躲苦力怕等 8 项盲点已记录。
+
+---
+
+## 4 · 目录
 
 ```text
-1. 拉取并构建宿主 Numen（NeoForge 1.21.1，Java 21 + Gradle 9.2，代理 127.0.0.1:7897）
-2. 启动游戏（存档 gpt），MCP 在 127.0.0.1:8765
-3. 启动监测台：node monitoring-station\server.mjs → http://127.0.0.1:8776
-4. 观测在 config/numen/monitor/*.jsonl
-5. 外部自编译编排：scripts\（run-mutation 等）
+src/                      ★ 自有源码
+  rdd-core/ experience-core/ settlement-core/ world-state-core/   纯 JVM core（main/ + test/）
+  plugins/                rdd learner acx experience camera settlement worldstate selfcompile
+  _host-touch/            我们写的、必须住在宿主包路径下的接缝文件（59 个，含 README）
+patches/
+  numen-host-modifications.patch   对宿主已有文件的全部改动 diff（146 文件，可 apply / 反向回滚）
+monitoring-station/      监测台（含「介绍」分页）
+docs/                    架构决策文档 + 改动索引
+scripts/                 外部自编译编排脚本（run-mutation 闭环 / 止损循环等）
+skills/                  自变异系统的 AI 编程技能
+templates/               NumenTool 生成系统提示词模板
+MODIFICATIONS.md         对宿主的修改说明（逐模块交代 + 回滚）
 ```
 
 ---
 
-## 目录
+## 5 · 怎么用
 
 ```text
-src/                  ★ 五大模块 Java 源码（ac-api/ac-core/rdd-core/experience-core + plugins/*，共 206 文件）
-  src/_host-touch/      我们写的、但必须住在宿主模块路径下的接缝文件（18 个，非宿主代码）
-monitoring-station/   监测台（含"介绍"分页：项目定位一目了然）
-docs/                 架构决策文档 + 改动索引（MODIFICATIONS-INDEX.md）
-scripts/              外部自编译编排脚本（run-mutation 闭环 / 止损循环等 10 个 .ps1）
-skills/               自变异系统的 AI 编程技能（rdd-selfcompile：外带 skill 同步收录）
-templates/            NumenTool 生成系统提示词模板
-patches/              heartpact-modifications.patch（对借用宿主 Numen 的改动 diff）
-MODIFICATIONS.md      对 Numen 的修改说明（逐模块交代，含回滚方式）
+1. 拉取并构建宿主 Numen（上游 Dwinovo/minecraft-numen，NeoForge 1.21.1，Java 21 + Gradle 9.2）
+   或直接用我们的宿主 fork 分支 redline-1（已含本文改动）
+2. apply patches/numen-host-modifications.patch，把 src/_host-touch/ 按路径放回，把 src/ 各模块并回
+3. 启动游戏（实例 live，存档 live），MCP 在 127.0.0.1:8765
+4. 启动监测台：node monitoring-station\server.mjs → http://127.0.0.1:8776
+5. 观测在 config/numen/monitor/*.jsonl（干净 UTF-8）
 ```
 
-> 🔧 **我们对借用宿主 Numen 改了什么？** 见 [MODIFICATIONS.md](MODIFICATIONS.md)（逐模块交代 + `patches/heartpact-modifications.patch` 全量 diff，可直接 apply / 反向回滚）。
+---
 
+## 6 · 给宿主作者（怎么介绍这个项目）
 
-有关于架构师，也就是我本人的一些补充
-这个项目5个模块实际上已经说完了，它本身上是一个已经验证了的骨架，以及填充了一部分血液的东西。但是也就是说，它的前身就是我们一直学习前辈voyager，然后，逐步的架构多次迭代，最终形成了一个项目，还有，就是要补充的就是那个自编译系统，实际上目前最稳定的是外部编译，也就是说，就比如说你用codex，或者说，claude，我特地为AI写了一个skills，他只需要读取了之后就会知道如何自动进入mc验证，以及怎么写边界模块，以及怎么回滚，以及怎么做测试。你究竟该怎样才算成功，以及怎么协助游戏内的AI完成任务？怎么去规划？怎么去执行业务，怎么去写工具？自己的边界在哪里，自己的职责在哪里，自己哪些能改，自己哪些不能改，而不是游戏内那个管道。游戏内的管道暂时还没有多处测试，也就是说，这个自编译系统它可以自己跑车，让他自己跑个3个小时，甚至是24个小时，没有，他自己测试这个程序怎么样，稳定性怎么样？自己带AI通关mc探索，然后可以用指令，也可以自己进游戏操作，然后修改代码，再进游戏重新用，他有自己的权利，有自己的工具，有自己的监测台，也就是对游戏内查看日志之类的，而且我们的那个监测台和那个AI用的监测台基本是同一个，也就是说AI能看到什么，我们就能跟着看到什么，同样，这也是为什么我写代码写的这么快的原因，因为我给他加上了一套编程流程。偶尔我会去做一些大的规划，但是现在因为架构基本完全了，所以说规划比较少，大部分都是自己跑，然后，还会给他上一大堆的特定的补充资料，以及我之前测试了这么久找到的短板，然后，其他程序都还好，也就是任务量啊，或者说ac执行器啊，这些东西都是重点干了一些的，而且也能用了，但是都是没有进行细化，因为确实没有时间让AI自己跑测试的，我也没钱了，也要上学了，反正后面有月假了，可能会去弄，再有就是，那个记忆库我是特地不弄的，因为我觉得，嗯，他确实写完了，但是没有接。我确实是故意不让他弄的，因为确实没什么空，所以说就专注于四个模块就可以了。还有就是那个可视化，我是做了自己的优化的推算，在游戏跟游戏外都可以用那个UI看，而且，我检测架构话，我现在只做了数据流检测，没有对代码的整体架构进行大量重申，那个数据流的话，但是没什么问题，符合了我的预期，这接近10000行的代码，应该不是AI拉的石，毕竟我也会自己去检查一下，然后也确实去游戏看了一下，确实能干事儿，也测试了，没有能力退化，嗯，当然，如果说真能力退化了怎么办呢？我们还有模块化回本，随便回本几个版本，然后组合起来看一下究竟是哪个的问题就可以了。
+> 你好，我在 Numen 上做了一套**上层扩展项目**，想同步一下、并问哪些值得回馈上游。**不是来提大 PR 的。**
+>
+> **定位**：不改 Numen 的核心语义，而是在它的公共 API（`NumenGateway` / 事件 / 工具注册）之上加一层。
+>
+> **三层**：① 纯 JVM core（不依赖 MC/Numen，可独立发坐标）：任务链 / 经验记忆 / 基地设施 / 世界观测；
+> ② 8 个插件走 `NumenGateway` 注册能力；③ 一套工程验证闭环（自动编译→进游戏→读监测台取证，在宿主之外）。
+>
+> **我动了宿主 `api/core/ai` 的少量地方**（新增接缝文件 59 个 + 改已有文件若干），
+> 全部记在 `patches/numen-host-modifications.patch`。**其中有你愿意收的，我可以单独拆成小 PR**——
+> 不需要你合并整个 fork（我们领先上游 300+ 提交，合并不现实）。
+>
+> **仓库**：项目主体在本仓；宿主 fork 在 [nuomi2422/minecraft-numen](https://github.com/nuomi2422/minecraft-numen)（分支 `redline-1`）。
 
-## 许可证
+---
 
-本项目代码 MIT License（监测台 / 文档 / 脚本）。**借用宿主 Numen 遵循其自身许可证。**
+## 7 · 许可证
+
+本项目代码 **MIT**（`src/` + 监测台 + 文档 + 脚本）。
+**借用宿主 Numen 遵循其自身许可证**（源码 LGPL-3.0，公共对接 API MIT）。
