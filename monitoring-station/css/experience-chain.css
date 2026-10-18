@@ -1,0 +1,251 @@
+/* ============================================================
+   experience-chain.css — 经验链数据流页（B18）
+
+   命名全部前缀 exp- / expn / expe / g-，避免和 monitoring.css 里
+   已有的 .card / .panel / .st-* 撞车（那 33KB 我没动，撞了就是回归）。
+   ============================================================ */
+
+.experience-chain {
+  margin-top: 10px;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--fg, #d8d8d8);
+}
+
+.exp-head {
+  margin: 14px 0 8px;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.exp-head b { font-size: 13px; }
+.exp-head2, .exp-sub {
+  color: var(--fg-dim, #8a8a8a);
+  font-size: 11px;
+}
+.exp-sub { margin: 6px 0 2px; }
+
+/* ---------- 盲区框：先说在前面 ---------- */
+
+.exp-blindbox {
+  border: 1px dashed #8a6d1f;
+  background: rgba(180, 130, 20, 0.08);
+  border-radius: 4px;
+  padding: 8px 10px;
+  margin: 8px 0 12px;
+  font-size: 11px;
+}
+.exp-blindbox > b { color: #e0b040; display: block; margin-bottom: 4px; }
+.exp-blindbox > div { margin: 2px 0; color: var(--fg-dim, #9a9a9a); }
+.exp-blindbox > div > b { color: #d0a838; }
+
+/* ---------- 区 1：链 ---------- */
+
+.exp-chain {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0;
+  padding: 6px 0 10px;
+}
+
+.expn {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 108px;
+  padding: 6px 9px;
+  border: 1px solid #3a5f7a;
+  border-radius: 4px;
+  background: rgba(40, 80, 110, 0.14);
+  cursor: pointer;
+}
+.expn:hover { border-color: #6fb0d8; background: rgba(60, 120, 160, 0.2); }
+.expn.blind {
+  border-style: dashed;
+  border-color: #6a6a6a;
+  background: rgba(90, 90, 90, 0.10);
+}
+.expn-idx { font-size: 10px; color: var(--fg-dim, #8a8a8a); }
+.expn-label { font-size: 12px; font-weight: 600; }
+.expn-count { font-size: 15px; font-weight: 700; color: #7fd0ff; }
+.expn.blind .expn-count { color: #8a8a8a; }
+.expn-src {
+  font-size: 10px;
+  color: var(--fg-dim, #8a8a8a);
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.expe {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 0 6px;
+  min-width: 62px;
+  cursor: pointer;
+}
+.expe-line {
+  display: block;
+  width: 26px;
+  height: 2px;
+  background: #4a8f6a;
+}
+.expe.blind .expe-line {
+  height: 0;
+  border-top: 2px dashed #6a6a6a;
+  background: none;
+}
+.expe-txt {
+  font-size: 10px;
+  color: var(--fg-dim, #8a8a8a);
+  text-align: center;
+}
+.expe.blind .expe-txt { color: #a08a4a; }
+.expe:hover .expe-txt { color: #7fd0ff; }
+
+.exp-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 6px 0 10px;
+  font-size: 11px;
+  color: var(--fg-dim, #8a8a8a);
+}
+.tok { margin-right: 6px; }
+.tok b { color: #b0b0b0; font-weight: 600; }
+
+/* ---------- task_finished 状态分布条 ---------- */
+
+.exp-stbar-wrap { margin: 10px 0 4px; }
+.stbar {
+  display: flex;
+  height: 9px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: #2a2a2a;
+  margin-bottom: 5px;
+}
+.stseg { display: block; height: 100%; }
+.stseg.ok { background: #3d8f5a; }
+.stseg.bad { background: #a83f3f; }
+.stseg.warn { background: #b08a2a; }
+.stseg.off { background: #555; }
+
+/* ---------- 区 2：门禁时间线 ---------- */
+
+.grows {
+  border: 1px solid #3a3a3a;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.grow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 8px;
+  border-bottom: 1px solid #2a2a2a;
+  cursor: pointer;
+  font-size: 11px;
+}
+.grow:last-child { border-bottom: none; }
+.grow:hover { background: rgba(90, 140, 180, 0.12); }
+.grow.head {
+  background: #202020;
+  color: var(--fg-dim, #8a8a8a);
+  cursor: default;
+  font-size: 10px;
+}
+.grow.head:hover { background: #202020; }
+
+.gtime { color: var(--fg-dim, #8a8a8a); width: 62px; flex: none; }
+.gwho { color: #7fa8c0; width: 74px; flex: none; }
+.gcells { display: inline-flex; gap: 3px; flex: none; }
+.gcell {
+  width: 13px;
+  height: 13px;
+  border: 1px solid #3a3a3a;
+  border-radius: 2px;
+  background: #1a1a1a;
+}
+.gcell.on { background: #b08a2a; border-color: #d0a838; }
+.gcell.hdr { background: #2a2a2a; border-color: #444; cursor: help; }
+.gblock { color: #8ac08a; }
+.gblock.bad { color: #e08040; font-weight: 600; }
+.gwarn { color: #d0a838; }
+
+/* ---------- 浮层：点开看内容 ---------- */
+
+.exp-tip {
+  display: none;
+  position: fixed;
+  z-index: 9999;
+  max-width: 640px;
+  max-height: 70vh;
+  overflow: auto;
+  padding: 10px 12px;
+  background: #14181c;
+  border: 1px solid #4a6a80;
+  border-radius: 5px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.6);
+  font-size: 11px;
+  line-height: 1.6;
+  cursor: default;
+}
+.exp-tip .tdl {
+  color: #7fd0ff;
+  font-weight: 600;
+  margin: 6px 0 2px;
+  border-bottom: 1px solid #2a3a44;
+  padding-bottom: 2px;
+}
+.exp-tip .tdl:first-child { margin-top: 0; }
+.exp-tip .tsub { color: #b8c4cc; word-break: break-all; }
+.exp-tip .twarn { color: #e0b040; }
+.exp-tip .tprobs { color: #e0b040; }
+
+/* ---- 逐节点新鲜度（第 5 组红线「历史 ≠ 当前」）：
+       每个节点读不同的文件，停更时间可以差很远（实测 events.jsonl 只落后 24 秒，
+       而 learner.jsonl 落后 9 小时）。所以徽标挂在**节点**上，不是整页一个。 ---- */
+.expn-fresh {
+  font-size: 10px; font-weight: 600; letter-spacing: .02em;
+  padding: 0 4px; border-radius: 3px; align-self: flex-start;
+}
+/* 新：跟着游戏一起在写 */
+.expn-fresh.ok { color: #7fd0a0; background: rgba(60, 140, 100, .18); }
+/* 旧但自洽（游戏和这份数据一起停的）：黄 —— 不是失败 */
+.expn-fresh.old { color: #e0c168; background: rgba(138, 109, 31, .22); }
+/* 没跟上 / 早就断了：红边（它不是「失败」，是「这些数字不属于现在」） */
+.expn-fresh.bad { color: #e08a8a; background: rgba(138, 50, 50, .26); }
+/* 读不到：最重的一档 —— 它让这一格的数字失效 */
+.expn-fresh.gone { color: #ff9a9a; background: rgba(160, 48, 48, .40); }
+/* 无源：结构上不可观测（没有落盘文件），与「旧」是两回事，所以中性灰 */
+.expn-fresh.none { color: #8a8a8a; background: rgba(90, 90, 90, .18); font-weight: 400; }
+
+.exp-fresh-verdict { color: #9aa4b2; margin-top: 4px; }
+.exp-fresh-badnote { color: #e0a04a; }
+.exp-fresh-oknote { color: #6f9a7a; }
+/* ---- 第 5 组红线第四条「未知 ≠ 零」----
+   四档状态各有各的显示色，因为它们要修的地方不一样：
+     known        数字可信（0 也是合法值）
+     truncated    只覆盖了一部分 ⇒ 显示 ≥N，数字是下界
+     unknown      想读读不到 ⇒ 修读法/文件
+     unobservable 结构上没有这个观测点 ⇒ 要改引擎（owner 冻结中） */
+.expn-count.exp-unk-known { color: #7fd0ff; }
+.expn-count.exp-unk-truncated { color: #e0c168; }
+.expn-count.exp-unk-unknown { color: #c0a0d0; font-size: 12px; font-weight: 600; }
+.expn-count.exp-unk-unobservable { color: #8a8a8a; font-size: 11px; font-weight: 500; }
+
+.exp-unk-note { color: #9aa4b2; font-weight: 400; }
+
+/* 审计框：一列里「量到的」与「真 0」必须分开报 */
+.exp-audit {
+  border: 1px solid #3a4450; background: #171c22; border-radius: 4px;
+  padding: 7px 11px; margin: 0 0 10px; font-size: 12px; line-height: 1.7;
+}
+.exp-audit b { color: #cfd6e0; }
+.exp-audit-note { color: #9aa4b2; margin-top: 3px; }

@@ -1,0 +1,309 @@
+/* ============================================================
+   panel.css — 监测台**共享设计层**（2026-10-05）
+
+   为什么要有这一份：
+     ① ④⑤ 这几块（token / ACX / 经验链）从一开始就按「卡片 + 徽标 + 新鲜度条」
+        那一套写的，所以好看；而 ①②③ 里的老页面是更早写的，用的是
+        `.grid` + `.card` + `.event-row` 那一批极简样式：灰底、小字、
+        没有层级、没有徽章、没有空态说明。owner 的原话是
+        「上下文那一整个页面我都不容易看出来究竟是什么东西」。
+     ⇒ 这一份**只改外观，不改骨架**：不碰任何 render 函数、不碰数据流、
+       不加/删任何页面或 DOM 结构。monitor-app.js / rdd-view.js 一个字不改，
+       同样的 HTML 在这里变好看、层级清楚、数字可读。
+
+   顺序很重要：index.html 里 panel.css 排在 monitoring.css **之后**，
+   同权重时后者覆盖前者，所以这一份生效。颜色全部取 theme.css 的令牌，
+   浅色主题自动对得上。
+
+   下面是「改了什么、为什么」的对照：
+     .card        灰底扁块   → 有底色差 + 左上角标题带 + 悬停浮起
+     .card-title  一行小灰字 → 标题带（品牌字体 + 金色左条）+ 可选副标题
+     .grid        8px 间距   → 10px + 卡片等宽对齐
+     .table       素边框     → 表头吸顶 + 斑马纹 + 数字等宽
+     .event-row   三段挤一行 → 时间/类型/正文三级层次，类型给色条
+     .kv          9em 标签   → 标签灰底胶囊，值不再被挤窄
+     .empty       padding40  → 说清「为什么空」，不再是灰字一行
+     .node        小方块     → 阶段块加宽 + 状态色更明确
+   ============================================================ */
+
+/* ---------- 页面级留白与标题 ---------- */
+.monitor-content { padding: 14px 16px 22px; }
+
+/* ---------- 卡片 ---------- */
+.grid { gap: 10px; }
+.card {
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-top: 1px solid var(--border-light);
+  border-radius: 3px;
+  padding: 12px 14px 14px;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, .25);
+  transition: border-color .12s, transform .12s, box-shadow .12s;
+}
+.card:hover { border-color: var(--border-light); box-shadow: 0 2px 0 rgba(0, 0, 0, .3); }
+.card.wide { flex-basis: 100%; }
+
+/* 标题带：左边一根金色竖条 —— 一眼分得清「这一块在讲什么」。
+   ★ 字体用正文字体族而不是 brand：brand 是 MC 字形，缺中文字符，
+     中文卡片标题会掉字形（这一份的标题全是中文）。 */
+.card-title {
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: calc(13px * var(--ui-font-scale, 1));
+  letter-spacing: .03em;
+  border-bottom: 1px solid var(--border);
+  padding: 0 0 8px 9px;
+  margin: 0 0 10px;
+  position: relative;
+  line-height: 1.5;
+}
+.card-title::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 1px; bottom: 8px;
+  width: 3px;
+  background: var(--gold);
+}
+/* 卡内小节标题（很多卡片正文里自己写了 <b>/<h4>） */
+.card b { color: var(--fg); }
+
+/* ---------- 键值对 ---------- */
+.kv {
+  gap: 8px;
+  padding: 4px 0;
+  border-bottom: 1px dashed rgba(255, 255, 255, .06);
+  align-items: baseline;
+}
+.kv:last-child { border-bottom: none; }
+.kv .k {
+  width: auto;
+  min-width: 7em;
+  max-width: 40%;
+  color: var(--fg-faint);
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  padding: 1px 6px;
+  font-size: var(--fs-xs);
+  text-align: right;
+}
+.kv .v { color: var(--fg); flex: 1; min-width: 0; }
+
+/* ---------- 表 ---------- */
+.table { font-size: var(--fs-xs); }
+.table-scroll {
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--bg-1);
+}
+.table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--bg-2);
+  color: var(--fg-dim);
+  font-weight: 600;
+  text-align: left;
+  padding: 7px 9px;
+  border-bottom: 1px solid var(--border-strong);
+  white-space: nowrap;
+}
+.table td {
+  padding: 6px 9px;
+  border-bottom: 1px solid rgba(255, 255, 255, .05);
+  color: var(--fg-dim);
+  vertical-align: top;
+}
+.table tbody tr:nth-child(even) { background: rgba(255, 255, 255, .022); }
+.table tbody tr:hover { background: rgba(255, 255, 255, .05); }
+.table td:first-child { color: var(--fg); }
+
+/* ---------- 事件行 ---------- */
+.event-list { gap: 2px; }
+.event-row {
+  background: var(--bg-2);
+  border-left: 3px solid var(--blue);
+  border-radius: 0 2px 2px 0;
+  padding: 5px 9px;
+  gap: 10px;
+  align-items: baseline;
+}
+.event-row:hover { background: var(--bg-3); }
+.event-row .time {
+  color: var(--fg-faint);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  flex: none;
+}
+.event-row .type {
+  color: var(--blue);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  flex: none;
+  min-width: 9em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.event-row .text {
+  color: var(--fg);
+  flex: 1;
+  min-width: 0;
+  white-space: normal;
+  line-height: 1.6;
+  overflow: visible;
+  text-overflow: clip;
+}
+.event-row.error { border-left-color: var(--red); }
+.event-row.error .type { color: var(--red); }
+
+/* ---------- 空态：必须说清「为什么空」 ---------- */
+.empty {
+  padding: 26px 18px;
+  text-align: center;
+  color: var(--fg-dim);
+  background: var(--bg-1);
+  border: 1px dashed var(--border-light);
+  border-radius: 3px;
+  line-height: 1.9;
+  font-size: var(--fs-xs);
+}
+.empty::before { content: "（　）"; color: var(--fg-faint); margin-right: 4px; }
+
+/* ---------- 代码 / 原文块 ---------- */
+.pre {
+  background: var(--bg-0);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border-light);
+  border-radius: 2px;
+  color: var(--fg-dim);
+  max-height: 300px;
+}
+details {
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 7px 10px;
+  margin: 6px 0;
+}
+details > summary {
+  color: var(--fg);
+  font-weight: 600;
+  padding: 1px 0;
+}
+details > summary::marker { color: var(--gold); }
+details[open] > summary { border-bottom: 1px solid var(--border); margin-bottom: 8px; padding-bottom: 6px; }
+
+/* ---------- 上下文页：原始 JSON 用等宽 + 换行，别挤成一坨 ---------- */
+.ctx-row {
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 2px 2px 0;
+  padding: 6px 9px;
+}
+.ctx-row .ctx-type { color: var(--accent); font-family: var(--font-mono); min-width: 9em; flex: none; }
+/* 一行可读的元信息（rdd-view.js 的 metaText 产出）；原文仍在其下方的 pre 里 */
+.ctx-meta {
+  color: var(--fg-dim);
+  font-size: var(--fs-xs);
+  line-height: 1.8;
+  padding: 2px 0 6px;
+  margin-bottom: 6px;
+  border-bottom: 1px dashed var(--border);
+}
+
+/* ---------- AI 对话行 ---------- */
+.ai-row {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border-light);
+  border-radius: 0 2px 2px 0;
+  padding: 6px 10px;
+}
+.ai-row:hover { background: var(--bg-3); }
+.ai-role { color: var(--fg-faint); }
+.ai-time { font-size: var(--fs-xs); }
+
+/* ---------- 阶段流程条 ---------- */
+.task-flow { padding: 14px 10px; gap: 0; }
+.task-flow .node {
+  flex: 0 0 min(240px, 26vw);
+  min-height: 68px;
+  background: var(--bg-1);
+  border: 1px solid var(--border-light);
+  border-radius: 3px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  line-height: 1.6;
+}
+.task-flow .node:not(:last-child)::after { color: var(--fg-faint); font-size: 20px; }
+.node.st-ok   { border-color: var(--green);  color: var(--green); }
+.node.st-done { border-color: var(--green);  color: var(--green); background: rgba(105, 173, 69, .12); }
+.node.st-wait { border-color: var(--amber);  color: var(--amber); }
+.node.st-off  { border-color: var(--border); color: var(--fg-faint); }
+.node.st-err  { border-color: var(--red);    color: var(--red); }
+.node.cur     { box-shadow: 0 0 0 2px rgba(105, 173, 69, .35); border-color: var(--green); }
+
+/* 二级小步 */
+.sub-row {
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border-light);
+  border-radius: 0 2px 2px 0;
+  padding: 7px 10px;
+}
+.sub-row .ds { color: var(--fg); }
+.sub-row .cv, .sub-row .st { font-family: var(--font-mono); }
+
+/* ---------- 监督开关条 ---------- */
+.sup-bar {
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 10px 12px;
+}
+
+/* ---------- 页面导语 ---------- */
+.page-intro {
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--blue);
+  border-radius: 3px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+}
+.page-intro h2 { color: var(--fg); margin-bottom: 6px; }
+.page-intro p { color: var(--fg-dim); line-height: 1.8; }
+.page-intro p b { color: var(--gold); }
+
+/* ---------- 提示 / 更正框 ---------- */
+.audit-gap {
+  background: rgba(240, 185, 45, .08);
+  border: 1px solid rgba(240, 185, 45, .45);
+  border-radius: 3px;
+  color: var(--amber);
+  padding: 8px 12px;
+  font-size: var(--fs-xs);
+  line-height: 1.8;
+  margin: 0 0 12px;
+}
+
+/* ---------- 顶部工具条 / 页签的收尾 ---------- */
+.monitor-toolbar { background: var(--bg-2); }
+.monitor-head { background: var(--bg-2); }
+.zone-tabs { background: var(--bg-2); }
+.zone-tabs button.active { background: var(--bg-1); }
+.sub-tabs { background: var(--bg-1); }
+.sub-tabs button.active { background: var(--bg-2); }
+.sub-gloss { background: var(--bg-1); color: var(--fg-dim); }
+.sub-gloss b { color: var(--gold); }
+
+/* ---------- 窄屏 ---------- */
+@media (max-width: 760px) {
+  .kv .k { min-width: 5.5em; }
+  .event-row .type { min-width: 6em; }
+}

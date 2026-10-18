@@ -1,0 +1,45 @@
+/* ============================================================
+   token.css — ①.6 Token 消耗速率页的两件新东西：每分钟柱 + 上下文水位条
+
+   为什么单独一个文件：这一页复用了 acx 的卡片 / badge / fresh 那一整套
+   （它们本来就是布局类，不带 AC 语义），只有「柱状图」和「水位条」是新的，
+   硬塞进 monitoring.css 会把那一行巨型规则撑得更难读。
+   ============================================================ */
+
+.tok-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 1px;
+  min-height: 48px;
+  padding: 6px 2px;
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 4px;
+  overflow-x: auto;
+}
+.tok-chart .tok-bar {
+  display: block;
+  flex: 0 0 5px;
+  min-width: 2px;
+  /* 每分钟一根，不补空分钟 —— 中间的空白是真的没在烧 */
+  background: linear-gradient(to top, rgba(255, 196, 84, 0.35), rgba(255, 196, 84, 0.9));
+  border-radius: 1px 1px 0 0;
+}
+.tok-chart .tok-bar:hover { background: #ffc454; }
+
+.tok-water {
+  position: relative;
+  height: 6px;
+  margin: 3px 0 4px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.tok-water > i {
+  display: block;
+  height: 100%;
+  background: #7ad17a;
+}
+.acx-stat.warn .tok-water > i { background: #ffc454; }
+.acx-stat.bad  .tok-water > i { background: #e2564d; }

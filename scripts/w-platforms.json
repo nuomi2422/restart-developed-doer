@@ -1,0 +1,100 @@
+{
+  "_comment": "特殊模式 W 层平台选择器覆盖文件（w-brain-drive.js 的 DEFAULT_PLATFORMS 在此之上合并）。url/open/input[]/reply[]/send[]/stop[]/continue[]。selector 失效时用 probe 页面人工核对。｜池子共 4 家：glm(主打) / deepseek / kimi / qwen。｜qwen 历史问题：每次都要人工过人机验证(captcha)，只有用户能亲手划；2026-09-29 用户已手动过一遍，现在可用。｜原则：能几家用几家，全通就用满 4 家，不为了凑数硬跑。",
+  "glm": {
+    "url": "https://chatglm.cn/",
+    "open": "https://chatglm.cn/",
+    "input": [
+      "textarea",
+      "div[contenteditable=\"true\"]",
+      "[contenteditable=\"true\"]"
+    ],
+    "reply": [
+      ".markdown-body",
+      "[class*=\"markdown\"]",
+      "[class*=\"message-content\"]",
+      "main"
+    ],
+    "stop": [
+      "button[aria-label*=\"停止\"]",
+      "button[aria-label*=\"Stop\"]",
+      "[class*=\"stop\"]"
+    ],
+    "continue": [
+      "继续生成",
+      "Continue"
+    ]
+  },
+  "deepseek": {
+    "url": "https://chat.deepseek.com/",
+    "open": "https://chat.deepseek.com/",
+    "input": [
+      "textarea",
+      "div[contenteditable=\"true\"]",
+      "[contenteditable=\"true\"]"
+    ],
+    "reply": [
+      "[class*=\"markdown\"]",
+      "[class*=\"fbb737a4\"]",
+      ".markdown-body",
+      "[class*=\"response\"]",
+      "main"
+    ],
+    "stop": [
+      "button[aria-label*=\"停止\"]",
+      "button[aria-label*=\"Stop\"]",
+      "[class*=\"stop\"]"
+    ],
+    "continue": [
+      "继续生成",
+      "Continue"
+    ],
+    "_note": "2026-09-29 用户批准加入 W 池。找不到回复元素时用 w-brain-drive.js dump deepseek 核对选择器。"
+  },
+  "qwen": {
+    "url": "https://chat.qwen.ai/",
+    "open": "https://chat.qwen.ai/",
+    "input": [
+      "textarea",
+      "div[contenteditable=\"true\"]",
+      "[contenteditable=\"true\"]"
+    ],
+    "reply": [
+      "[class*=\"qwen-chat-message-assistant\"]",
+      ".markdown-body",
+      "[class*=\"markdown\"]"
+    ],
+    "stop": [
+      "button[aria-label*=\"停止\"]",
+      "button[aria-label*=\"Stop\"]",
+      "[class*=\"stop\"]"
+    ],
+    "continue": [
+      "继续生成",
+      "Continue"
+    ]
+  },
+  "kimi": {
+    "url": "https://www.kimi.com/",
+    "open": "https://www.kimi.com/",
+    "input": [
+      "div.chat-input-editor",
+      "div[contenteditable=\"true\"]",
+      "textarea",
+      "[contenteditable=\"true\"]"
+    ],
+    "reply": [
+      "[class*=\"markdown\"]",
+      "[class*=\"segment-content\"]",
+      ".markdown-body",
+      "main"
+    ],
+    "stop": [
+      "button[aria-label*=\"停止\"]",
+      "[class*=\"stop\"]"
+    ],
+    "continue": [
+      "继续生成",
+      "Continue"
+    ]
+  }
+}

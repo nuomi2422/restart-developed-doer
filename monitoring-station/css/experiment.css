@@ -1,0 +1,331 @@
+/* ============================================================
+   experiment.css — ⑥ 实验统计页
+
+   为什么单独一个文件：这一页有三样别处没有的东西 ——
+     ① 面板台（可拖拽重排的面板网格 + 每个面板自己的开关）
+     ② 纯 SVG 折线 / 堆叠柱（没有引入任何图表库，观测层越薄越好）
+     ③ 「未接入」的视觉语言（纪律①的落点：读不到 ≠ 0）
+
+   颜色一律取 theme.css 的令牌，所以浅色主题也自动对得上；
+   只有「序列色」是这一页自己定的 6 色（画多条线必须互相能分辨）。
+   ============================================================ */
+
+/* ── 页头 ───────────────────────────────────────────── */
+#experiment-host h2 {
+  /* ★ 用正文字体不用 brand：brand(OreDisplay) 是 MC 字形，缺中文字符，
+     中文标题会掉字形。正文字体族里后面挂了微软雅黑/苹方，中文永远有解。 */
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: calc(21px * var(--ui-font-scale, 1));
+  color: var(--fg);
+  margin: 2px 0 6px;
+  letter-spacing: .04em;
+}
+#experiment-host h3 {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: calc(14px * var(--ui-font-scale, 1));
+  color: var(--fg);
+  margin: 20px 0 8px;
+  padding-left: 9px;
+  border-left: 3px solid var(--gold);
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+#experiment-host h3 .exp-h3note {
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  color: var(--fg-faint);
+  border: none;
+  padding: 0;
+}
+#experiment-host .acx-sub { margin: 0 0 12px; }
+#experiment-host .exp-sub {
+  color: var(--fg-faint);
+  font-size: var(--fs-xs);
+  line-height: 1.7;
+  margin: 6px 2px 0;
+}
+#experiment-host .exp-sub b { color: var(--fg-dim); }
+
+/* ── 顶部汇总卡 ─────────────────────────────────────── */
+.exp-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: 8px;
+  margin: 4px 0 12px;
+}
+.exp-stat {
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border-light);
+  border-radius: var(--radius);
+  padding: 8px 12px;
+}
+.exp-stat.ok  { border-left-color: var(--green); }
+.exp-stat.bad { border-left-color: var(--red); }
+.exp-stat.warn{ border-left-color: var(--amber); }
+.exp-stat.na  { border-left-color: var(--fg-faint); background: var(--bg-2); }
+.exp-stat-v {
+  font-family: var(--font-mono);
+  font-size: calc(23px * var(--ui-font-scale, 1));
+  line-height: 1.2;
+  color: var(--fg);
+}
+.exp-stat.bad .exp-stat-v { color: var(--red); }
+.exp-stat.ok  .exp-stat-v { color: var(--green); }
+.exp-stat.warn .exp-stat-v { color: var(--amber); }
+.exp-stat-sub { font-size: var(--fs-xs); color: var(--fg-faint); margin-top: 2px; }
+/* ★ 「未接入」要一眼看出它不是 0 */
+.exp-na {
+  color: var(--fg-faint) !important;
+  font-style: normal;
+  text-decoration: underline dotted var(--border-light);
+  text-underline-offset: 3px;
+}
+.exp-stat-v.exp-na { font-family: var(--font-body); font-size: calc(15px * var(--ui-font-scale, 1)); text-decoration: none; }
+.exp-na-box {
+  border: 1px solid var(--border-light);
+  background: var(--bg-2);
+  color: var(--fg-dim);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  font-size: var(--fs-xs);
+  line-height: 1.7;
+}
+.exp-inferred {
+  border: 1px solid rgba(240, 185, 45, .45);
+  background: rgba(240, 185, 45, .08);
+  color: var(--amber);
+  border-radius: var(--radius);
+  padding: 6px 10px;
+  font-size: var(--fs-xs);
+  line-height: 1.7;
+  margin-bottom: 6px;
+}
+
+/* ── 目标接入提示 ───────────────────────────────────── */
+.exp-note {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--gold);
+  background: var(--bg-1);
+  border-radius: var(--radius);
+  padding: 9px 12px;
+  font-size: var(--fs-xs);
+  line-height: 1.8;
+  color: var(--fg-dim);
+  margin-bottom: 6px;
+}
+.exp-note b { color: var(--gold); }
+
+/* ── 徽标 ───────────────────────────────────────────── */
+.exp-pill {
+  display: inline-block;
+  border: 1px solid var(--border-light);
+  border-radius: 2px;
+  padding: 0 5px;
+  font-size: var(--fs-xs);
+  color: var(--fg-faint);
+  white-space: nowrap;
+}
+.exp-pill.ok      { border-color: var(--green); color: var(--green); }
+.exp-pill.warn    { border-color: var(--amber); color: var(--amber); }
+.exp-pill.bad     { border-color: var(--red);   color: var(--red); }
+.exp-pill.gone    { border-color: var(--red);   color: var(--red); background: rgba(212, 91, 80, .12); }
+.exp-pill.better  { border-color: var(--green); color: var(--green); }
+.exp-pill.worse   { border-color: var(--red);   color: var(--red); }
+.exp-pill.flat    { border-color: var(--border-light); color: var(--fg-dim); }
+.exp-pill.unknown { border-color: var(--amber); color: var(--amber); }
+
+/* ── 指标小开关 ─────────────────────────────────────── */
+.exp-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+  margin: 2px 0 8px;
+}
+.exp-chips-label { font-size: var(--fs-xs); color: var(--fg-faint); margin-right: 2px; }
+.exp-chip {
+  font: inherit;
+  font-size: var(--fs-xs);
+  color: var(--fg-faint);
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  padding: 2px 7px;
+  cursor: pointer;
+}
+.exp-chip:hover { color: var(--fg); border-color: var(--border-light); }
+.exp-chip.on { color: var(--fg); border-color: var(--accent); background: var(--bg-2); }
+.exp-chip.na { opacity: .72; }
+.exp-chip sup { color: var(--red); margin-left: 3px; font-size: 9px; }
+.exp-chip.reset { margin-left: 6px; color: var(--amber); border-color: rgba(240, 185, 45, .4); }
+
+/* ── 表 ─────────────────────────────────────────────── */
+.exp-table { font-size: var(--fs-xs); }
+.exp-table th { background: var(--bg-2); color: var(--fg-dim); font-weight: 600; white-space: nowrap; }
+.exp-table th[data-exp-sort] { cursor: pointer; }
+.exp-table th[data-exp-sort]:hover { color: var(--gold); }
+.exp-table small { color: var(--fg-faint); font-weight: normal; }
+.exp-matrix tbody tr { cursor: pointer; }
+.exp-matrix tbody tr:hover { background: var(--bg-2); }
+.exp-matrix tbody tr.sel { background: var(--bg-2); box-shadow: inset 3px 0 0 var(--gold); }
+.exp-matrix td { font-family: var(--font-mono); }
+.exp-matrix td:nth-child(1),
+.exp-matrix td:nth-child(2),
+.exp-matrix td:nth-child(3) { font-family: var(--font-body); }
+/* 指标着色：受损红 / 成果绿 / 行动蓝 / 异常黄 —— 与面板的指标 kind 对齐 */
+.exp-n-bad    { color: var(--red); }
+.exp-n-good   { color: var(--green); }
+.exp-n-action { color: var(--blue); }
+.exp-n-warn   { color: var(--amber); }
+td sup { color: var(--fg-faint); font-size: 9px; margin-left: 2px; }
+
+/* ── 行明细 ─────────────────────────────────────────── */
+.exp-detail {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--blue);
+  background: var(--bg-1);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  margin: 10px 0;
+}
+.exp-detail-head { font-size: var(--fs-xs); color: var(--fg-dim); margin-bottom: 8px; }
+.exp-detail-block { margin: 10px 0; font-size: var(--fs-xs); color: var(--fg-dim); line-height: 1.8; }
+.exp-detail-block b { color: var(--fg); display: block; margin-bottom: 4px; }
+.exp-kv { display: flex; flex-wrap: wrap; gap: 4px; }
+.exp-kv span {
+  border: 1px solid var(--border);
+  background: var(--bg-2);
+  border-radius: 2px;
+  padding: 1px 6px;
+  color: var(--fg-dim);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+}
+.exp-kv span b { display: inline; color: var(--fg); margin: 0; }
+
+/* ── 面板台 ─────────────────────────────────────────── */
+.exp-dock {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(430px, 1fr));
+  gap: 10px;
+  align-items: start;
+}
+.exp-panel {
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  min-width: 0;
+}
+.exp-panel.dragover { border-color: var(--gold); box-shadow: 0 0 0 2px rgba(240, 185, 45, .3); }
+.exp-panel-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: var(--bg-2);
+  border-bottom: 1px solid var(--border);
+  cursor: grab;
+  user-select: none;
+}
+.exp-panel-head b { color: var(--fg); font-size: var(--fs-sm); }
+.exp-grip { color: var(--fg-faint); cursor: grab; letter-spacing: -2px; }
+.exp-panel-metric { color: var(--blue); font-size: var(--fs-xs); margin-left: auto; }
+.exp-panel-metric sup { color: var(--amber); margin-left: 3px; font-size: 9px; }
+.exp-panel-ctl { display: flex; gap: 2px; }
+.exp-panel-ctl button {
+  font: inherit;
+  font-size: var(--fs-xs);
+  line-height: 1;
+  color: var(--fg-faint);
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  padding: 2px 6px;
+  cursor: pointer;
+}
+.exp-panel-ctl button:hover { color: var(--fg); border-color: var(--border-light); }
+.exp-panel-body { padding: 8px 10px 10px; }
+.exp-panel-selects { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }
+.exp-panel-selects select {
+  font: inherit;
+  font-size: var(--fs-xs);
+  color: var(--fg);
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  padding: 2px 4px;
+  max-width: 200px;
+}
+.exp-panel-hint { font-size: var(--fs-xs); color: var(--fg-faint); line-height: 1.7; margin-bottom: 6px; }
+
+/* ── 图表 ───────────────────────────────────────────── */
+.exp-chart {
+  width: 100%;
+  /* ★ height:auto（等比缩放）—— 不能给固定 height：那会把 viewBox 纵向拉伸，
+     刻度数字被压扁，5 看成 50。 */
+  height: auto;
+  display: block;
+  background: rgba(0, 0, 0, .16);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.exp-grid { stroke: var(--border); stroke-width: 1; }
+/* 刻度字号是 **viewBox 单位**：SVG 会被等比缩到面板宽度（1000 → ~520px），
+   所以 10 会缩成约 5px，看不清。这里给 22，落到页面上约 11px。 */
+.exp-tick { fill: var(--fg-faint); font-size: 22px; font-family: var(--font-mono); }
+.exp-chart-empty {
+  border: 1px dashed var(--border-light);
+  border-radius: var(--radius);
+  color: var(--fg-faint);
+  font-size: var(--fs-xs);
+  text-align: center;
+  padding: 28px 8px;
+}
+
+/* 6 条序列色：必须在深浅两种主题下都互相能分辨 */
+.exp-s0 { stroke: #58a6d2; fill: #58a6d2; }
+.exp-s1 { stroke: #69ad45; fill: #69ad45; }
+.exp-s2 { stroke: #f0b92d; fill: #f0b92d; }
+.exp-s3 { stroke: #d45b50; fill: #d45b50; }
+.exp-s4 { stroke: #7345e5; fill: #7345e5; }
+.exp-s5 { stroke: #37b0c4; fill: #37b0c4; }
+.exp-chart path { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.exp-chart rect { opacity: .82; }
+.exp-chart rect:hover { opacity: 1; }
+
+.exp-legend { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: 6px; }
+.exp-legend-item {
+  font-size: var(--fs-xs);
+  color: var(--fg-dim);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
+}
+.exp-legend-item i { width: 9px; height: 9px; display: inline-block; flex: none; }
+.exp-legend-item b { color: var(--fg); font-family: var(--font-mono); }
+.exp-legend-item.muted { color: var(--fg-faint); }
+
+/* ── 口径说明 ───────────────────────────────────────── */
+.exp-caveats { border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-1); padding: 8px 12px; }
+.exp-caveat {
+  font-size: var(--fs-xs);
+  color: var(--fg-dim);
+  line-height: 1.8;
+  padding: 3px 0;
+  border-bottom: 1px dashed var(--border);
+}
+.exp-caveat:last-child { border-bottom: none; }
+.exp-caveat > b:first-child { color: var(--gold); margin-right: 4px; }
+.exp-caveat b { color: var(--fg); }
+
+@media (max-width: 900px) {
+  .exp-dock { grid-template-columns: 1fr; }
+  .exp-stats { grid-template-columns: repeat(auto-fit, minmax(112px, 1fr)); }
+}

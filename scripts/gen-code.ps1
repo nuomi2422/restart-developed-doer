@@ -9,11 +9,11 @@ param(
 
 . "$PSScriptRoot\config.ps1"
 
-$dir = Join-Path $Script:SC_MUTATIONS $MutationId
+$dir = Join-Path $global:RDD_SC.SC_MUTATIONS $MutationId
 if (-not (Test-Path $dir)) { throw "mutation not found: $dir" }
 
-$genDir = "E:\restart developing doer\minecraft-numen\plugins\selfcompile\src\main\java\com\dwinovo\numen\plugins\selfcompile\generated"
-$entryFile = "E:\restart developing doer\minecraft-numen\plugins\selfcompile\src\main\java\com\dwinovo\numen\plugins\selfcompile\SelfCompileEntry.java"
+$genDir = Join-Path $global:RDD_SC.NUMMEN_REPO "plugins\selfcompile\src\main\java\com\dwinovo\numen\plugins\selfcompile\generated"
+$entryFile = Join-Path $global:RDD_SC.NUMMEN_REPO "plugins\selfcompile\src\main\java\com\dwinovo\numen\plugins\selfcompile\SelfCompileEntry.java"
 
 if (-not $ToolClass) { throw "ToolClass required" }
 

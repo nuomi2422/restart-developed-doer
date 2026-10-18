@@ -1,0 +1,97 @@
+/* ============================================================
+   经验库 · 按内容（explib 页）
+   设计前提：这一页要解决的是「经验库很乱、难以识别」，
+   所以三件���必须显眼：重复率、程序读不到、七项填没填齐。
+   ============================================================ */
+
+.expl-plain {
+  background: var(--panel, #16181d);
+  border-left: 3px solid #4a8fd6;
+  padding: 10px 14px;
+  margin: 10px 0 16px;
+  line-height: 1.7;
+}
+.expl-plain div { margin: 2px 0; }
+
+/* ---- 统计卡 ---- */
+.expl-cards { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0 18px; }
+.expl-stat {
+  background: var(--panel, #16181d);
+  border: 1px solid #2a2e36;
+  border-radius: 6px;
+  padding: 10px 14px;
+  min-width: 132px;
+}
+.expl-stat-k { color: #9aa4b2; font-size: 12px; }
+.expl-stat-v { font-size: 22px; font-weight: 600; margin: 2px 0; }
+.expl-stat-h { color: #6f7885; font-size: 11px; line-height: 1.5; }
+
+/* ---- 文件表 ---- */
+.expl-table { width: 100%; border-collapse: collapse; margin: 6px 0 4px; font-size: 13px; }
+.expl-table th, .expl-table td {
+  border-bottom: 1px solid #242830;
+  padding: 6px 8px;
+  text-align: left;
+  vertical-align: top;
+}
+.expl-table th { color: #9aa4b2; font-weight: 500; }
+.expl-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+/* ★ 「条目在那儿但代码读到 0 条」这类行单独标红 —— 不许混在普通行里让人当成知识量 */
+.expl-table tr.row-bad td { background: rgba(200, 70, 70, .10); }
+.expl-table code { color: #7fb2e8; font-size: 12px; }
+
+.expl-badge {
+  display: inline-block;
+  border: 1px solid #3a3f49;
+  border-radius: 3px;
+  padding: 0 5px;
+  margin-right: 4px;
+  font-size: 11px;
+  color: #aab3bf;
+  white-space: nowrap;
+}
+.expl-badge.ok { border-color: #2f7a4a; color: #7fd6a2; }
+.expl-badge.warn { border-color: #8a6d1f; color: #e0c168; }
+.expl-badge.bad { border-color: #8a3232; color: #f09090; }
+.expl-badge.dup { border-color: #4a5f8a; color: #9fc0f0; }
+
+.expl-bad-text { color: #f09090; font-size: 12px; }
+.expl-note { color: #8b95a3; font-size: 12px; line-height: 1.7; }
+
+/* ---- 内容卡片 ---- */
+.expl-filter {
+  width: 100%; box-sizing: border-box;
+  background: #12141a; border: 1px solid #2a2e36; border-radius: 4px;
+  color: #dfe4ea; padding: 6px 9px; margin: 6px 0 12px; font-size: 13px;
+}
+.expl-card { border: 1px solid #242830; border-radius: 5px; margin-bottom: 6px; }
+.expl-card.open { border-color: #3a4453; }
+.expl-card-head { display: flex; align-items: center; gap: 8px; padding: 7px 10px; cursor: pointer; }
+.expl-card-head:hover { background: rgba(255, 255, 255, .03); }
+.expl-caret { color: #7f8896; width: 12px; }
+.expl-title { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.expl-flags { flex: none; }
+.expl-card-body { border-top: 1px solid #242830; padding: 8px 12px 12px; }
+.expl-meta {
+  display: flex; flex-wrap: wrap; gap: 14px;
+  color: #9aa4b2; font-size: 12px; margin-bottom: 8px;
+}
+
+/* ---- 七项（owner 要的「看内容那些」）---- */
+.expl-seven-row { display: flex; gap: 10px; padding: 3px 0; align-items: flex-start; }
+.expl-seven-zh { flex: none; width: 108px; color: #7fb2e8; font-size: 12px; padding-top: 1px; }
+.expl-seven-value { flex: 1; min-width: 0; overflow-wrap: anywhere; line-height: 1.65; }
+.expl-seven-empty { flex: 1; color: #6f7885; font-style: italic; }
+/* ★ 没填的项整行淡下去 —— 「没填」与「填了」在扫一眼时就要能分开 */
+.expl-seven-row.is-empty { opacity: .55; }
+
+/* ---- 状态 ---- */
+.expl-empty { color: #8b95a3; padding: 14px 2px; line-height: 1.8; }
+/* ⚠️ 「读不到」不是「没东西」—— 这句话直接写在错误框里，免得看的人以为经验库空了 */
+.expl-err {
+  background: rgba(200, 70, 70, .10);
+  border: 1px solid #8a3232;
+  border-radius: 5px;
+  padding: 12px 14px;
+  line-height: 1.8;
+}

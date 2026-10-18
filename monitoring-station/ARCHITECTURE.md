@@ -26,6 +26,8 @@
 ┌──────────▼──────────────────────────────────────────────┐
 │  本监测台（127.0.0.1:8776）                              │
 │  总览 / AI / Context / Tools / AC / 环境 / 健康          │
+│  + 实验统计（AI × 目标：死亡 / AC 调用 / 行动 / 学习）    │
+│  + 世界与经济（共同事实 / 经济开关，**骨架页**）           │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -66,9 +68,14 @@ API：
   /api/snapshot    读所有分类 JSONL
   /api/numen-log   读 latest.log 解析 AI 决策行
   /api/health      健康检查
+  /api/experiment-stats  实验统计（AI × 目标：死亡 / AC 调用 / 行动次数 / 学习曲线）
+  /api/world-facts      单一世界 · 环境事实（骨架页；「已接入」由运行时探测）
+  /api/economy          经济与开关（骨架页；含 72 号八脚本 roster）
 
 数据源：
   config/numen/monitor/*.jsonl
+  config/numen/rdd-{assets,facts,history,ledger}/<uuid>.json   ← 单一世界页
+  config/numen/acx/{library.json,records.jsonl,lib/stable/*}   ← 经济与开关页
   logs/latest.log（GBK）
 
 重启游戏前检查：

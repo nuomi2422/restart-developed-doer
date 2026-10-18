@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>监测台自检 v2</title>
+<style>
+  body { font: 13px/1.65 Consolas, "Microsoft YaHei", monospace; background:#14181d; color:#dfe6ee; padding:20px; }
+  h1 { font-size:17px; margin:0 0 4px; color:#8fd6ff; }
+  .sub { color:#7f8c99; margin-bottom:14px; font-size:12px; }
+  .line { padding:4px 10px; margin:2px 0; border-left:3px solid #333; background:#1b2027; }
+  .ok { border-color:#4caf50; } .bad { border-color:#f44336; } .warn { border-color:#ff9800; }
+  .n { color:#ffd54f; font-weight:bold; }
+  #err { color:#ff8a80; font-size:12px; white-space:pre-wrap; margin-top:10px; }
+</style>
+</head>
+<body>
+<h1>监测台自检 v2</h1>
+<div class="sub">分三层查：① HTTP 能不能通 ② adapter 收到什么 ③ store 收到什么</div>
+<div id="out">运行中…</div>
+<div id="err"></div>
+
+<script src="/js/monitor-store.js"></script>
+<script src="/js/numen-adapter.js"></script>
+<script>
+var out = document.getElementById('out'), errBox = document.getElementById('err');
+function say(cls, label, value) {
+  var d = document.createElement('div');
+  d.className = 'line ' + cls;
+  d.innerHTML = label + ' <span class="n">' + value + '</span>';
+  out.appendChild(d);
+}
+function fail(e) { errBox.textContent += 'ERR: ' + e + '\n'; }
+window.addEventListener('error', function (e) { fail('window.onerror @' + e.lineno + ': ' + e.message); });
+
+// ── 探针 A：直接 fetch，看 HTTP 层通不通 ──
+function probeHttp() {
+  return fetch('/api/snapshot?_=' + Date.now())
+    .then(function (r) { return r.text().then(function (t) { return { status: r.status, len: t.length, body: t }; }); })
+    .then(function (r) {
+      say(r.status === 200 ? 'ok' : 'bad', 'A1 fetch /api/snapshot 状态', r.status + ' / ' + r.len + ' 字节');
+      try {
+        var j = JSON.parse(r.body);
+        var rdd = (j.categories && j.categories.rdd) || [];
+        say(rdd.length ? 'ok' : 'bad', 'A2 返回里 rdd 事件数', rdd.length);
+        var tc = rdd.filter(function (e) { return e.data && e.data.taskChain; });
+        say(tc.length ? 'ok' : 'bad', 'A3 其中 data.taskChain 存在', tc.length + ' 条');
+      } catch (e) { say('bad', 'A2 JSON 解析失败', String(e)); }
+      return r;
+    })
+    .catch(function (e) { say('bad', 'A1 fetch 失败', String(e)); fail(e); });
+}
+
+// ── 探针 B：自己发 XHR，捕获 adapter 用的那条路径 ──
+function probeXhr() {
+  return new Promise(function (resolve) {
+    var x = new XMLHttpRequest();
+    x.open('GET', '/api/snapshot?_=' + Date.now(), true);
+    x.onreadystatechange = function () {
+      if (x.readyState !== 4) return;
+      say(x.status === 200 ? 'ok' : 'bad', 'B1 XHR readyState=4 状态', x.status);
+      resolve();
+    };
+    x.onerror = function () { say('bad', 'B1 XHR onerror', '网络层失败'); resolve(); };
+    try { x.send(); } catch (e) { say('bad', 'B1 XHR send 抛异常', String(e)); resolve(); }
+    setTimeout(function(){ resolve(); }, 5000);
+  });
+}
+
+// ── 探针 C：adapter 有没有把连接状态广播出来 ──
+var connMsg = null, evtCount = 0;
+function probeAdapter() {
+  NumenAdapter.subscribe(function (m) {
+    if (m.type === 'connection') connMsg = m.payload;
+    if (m.type === 'event') evtCount++;
+  });
+  NumenAdapter.subscribe(function (m) { MonitorStore.accept(m); });
+  NumenAdapter.start();
+}
+
+// ── 汇总 ──
+function report() {
+  say(connMsg ? (connMsg.connected ? 'ok' : 'bad') : 'bad',
+      'C1 adapter 报的连接状态', connMsg ? ('connected=' + connMsg.connected) : '（从未收到 connection 消息）');
+  say(evtCount ? 'ok' : 'bad', 'C2 adapter 广播的 event 条数', evtCount);
+
+  var evs = MonitorStore.getEvents('rdd');
+  say(evs.length ? 'ok' : 'bad', 'C3 store rdd 事件数', evs.length);
+
+  var tc = evs.filter(function (e) { return e.payload && e.payload.taskChain; });
+  say(tc.length ? 'ok' : 'bad', 'C4 带 taskChain 的', tc.length);
+
+  var verdict;
+  if (connMsg && connMsg.connected === false) verdict = '★ adapter 连不上 /api/snapshot';
+  else if (evtCount === 0) verdict = '★ adapter 没广播 event（poll 或 ingest 内部失败）';
+  else if (evs.length === 0) verdict = '★ adapter 广播了但 store 没收到（accept 链路问题）';
+  else if (tc.length === 0) verdict = '★ store 有事件但无 taskChain';
+  else verdict = '★★ 数据全通 —— 正常页面该能显示，问题在 render/tab';
+  var d = document.createElement('div');
+  d.className = 'line ' + (verdict.indexOf('★★') === 0 ? 'ok' : 'bad');
+  d.style.fontWeight = 'bold'; d.textContent = '结论：' + verdict;
+  out.appendChild(d);
+  document.title = '自检：' + verdict;
+}
+
+probeHttp()
+  .then(probeXhr)
+  .then(function () { probeAdapter(); })
+  .catch(fail)
+  .then(function () { setTimeout(report, 6000); });
+</script>
+</body>
+</html>

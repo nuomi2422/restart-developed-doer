@@ -1,0 +1,151 @@
+/* ============================================================
+   skeleton.css — ⑦ 世界与经济 两页的共同骨架
+
+   这两页是**骨架页**：架构里有、数据源大部分还没接。
+   所以这一份 CSS 的重点不是好看，而是让「没接上」这件事**一眼看得见**：
+     · 「未接入」永远有同样的视觉签名（虚线框 + 弱色 + 不许用 0 代替）
+     · 「已接入」是实心徽标 + 绿
+     · 接线契约每行自带「需要什么 / 现在拿什么代替 / 怎么验」三栏 ——
+       后来的 AI 照着第三栏就能自测，不用猜
+
+   颜色全部取 theme.css 令牌，浅色主题自动对得上。
+   ============================================================ */
+
+/* ---------- 页头 ---------- */
+.sk-head {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: calc(21px * var(--ui-font-scale, 1));
+  color: var(--fg);
+  margin: 2px 0 6px;
+  letter-spacing: .03em;
+}
+.sk-sub { color: var(--fg-faint); font-size: var(--fs-xs); margin: 0 0 12px; line-height: 1.8; }
+.sk-h3 {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: calc(14px * var(--ui-font-scale, 1));
+  color: var(--fg);
+  margin: 20px 0 8px;
+  padding-left: 9px;
+  border-left: 3px solid var(--gold);
+  display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+}
+.sk-h3 .sk-note {
+  font-family: var(--font-body); font-weight: 400;
+  font-size: var(--fs-xs); color: var(--fg-faint);
+}
+
+/* ---------- 汇总卡 ---------- */
+.sk-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; margin: 4px 0 12px; }
+.sk-stat {
+  background: var(--bg-1); border: 1px solid var(--border);
+  border-left: 3px solid var(--border-light); border-radius: 3px; padding: 8px 12px;
+}
+.sk-stat.good { border-left-color: var(--green); }
+.sk-stat.warn { border-left-color: var(--amber); }
+.sk-stat.bad  { border-left-color: var(--red); }
+.sk-stat.na   { border-left-color: var(--fg-faint); background: var(--bg-2); }
+.sk-stat-v { font-family: var(--font-mono); font-size: calc(23px * var(--ui-font-scale, 1)); line-height: 1.2; color: var(--fg); }
+.sk-stat.good .sk-stat-v { color: var(--green); }
+.sk-stat.warn .sk-stat-v { color: var(--amber); }
+.sk-stat.bad  .sk-stat-v { color: var(--red); }
+.sk-stat-sub { font-size: var(--fs-xs); color: var(--fg-faint); margin-top: 2px; }
+
+/* ★「未接入」在三处保持同一种签名：值用 ? 号字体、下面给一句「为什么没有」 */
+.sk-na {
+  color: var(--fg-faint) !important; font-style: normal;
+  text-decoration: underline dotted var(--border-light); text-underline-offset: 3px;
+}
+.sk-stat-v.sk-na { font-family: var(--font-body); font-size: calc(15px * var(--ui-font-scale, 1)); text-decoration: none; }
+
+/* ---------- 提示框 ---------- */
+.sk-note-box {
+  border: 1px solid var(--border); border-left: 3px solid var(--blue);
+  background: var(--bg-1); border-radius: 3px; padding: 9px 12px;
+  font-size: var(--fs-xs); line-height: 1.8; color: var(--fg-dim); margin: 0 0 12px;
+}
+.sk-warn-box {
+  border: 1px solid rgba(240, 185, 45, .45); background: rgba(240, 185, 45, .08);
+  color: var(--amber); border-radius: 3px; padding: 9px 12px;
+  font-size: var(--fs-xs); line-height: 1.8; margin: 0 0 12px;
+}
+.sk-gone-box {
+  border: 1px solid var(--border-light); background: var(--bg-2);
+  color: var(--fg-dim); border-radius: 3px; padding: 10px 12px;
+  font-size: var(--fs-xs); line-height: 1.7;
+}
+
+/* ---------- 徽标 ---------- */
+.sk-pill {
+  display: inline-block; border: 1px solid var(--border-light); border-radius: 2px;
+  padding: 0 5px; font-size: var(--fs-xs); color: var(--fg-faint); white-space: nowrap;
+}
+.sk-pill.ok    { border-color: var(--green);  color: var(--green); }
+.sk-pill.warn  { border-color: var(--amber);  color: var(--amber); }
+.sk-pill.bad   { border-color: var(--red);    color: var(--red); }
+.sk-pill.gone  { border-color: var(--red); color: var(--red); background: rgba(212, 91, 80, .12); }
+.sk-pill.old   { border-color: var(--amber); color: var(--amber); }
+.sk-pill.muted { border-color: var(--border); color: var(--fg-faint); }
+
+/* ---------- 接线契约表（这一页的核心）---------- */
+.sk-wire td { vertical-align: top; }
+.sk-wire .sk-need { color: var(--fg); }
+.sk-wire .sk-stand { color: var(--fg-dim); }
+.sk-wire .sk-verify { color: var(--fg-faint); font-size: var(--fs-xs); }
+.sk-wire code { color: var(--blue); }
+.sk-owner {
+  font-family: var(--font-mono); font-size: var(--fs-xs);
+  border: 1px solid var(--border-light); border-radius: 2px; padding: 0 4px; color: var(--gold);
+}
+.sk-progress { height: 6px; background: rgba(0,0,0,.3); border-radius: 3px; overflow: hidden; min-width: 70px; }
+.sk-progress > i { display: block; height: 100%; background: var(--green); }
+
+/* ---------- 分级横条 ---------- */
+.sk-tally { display: flex; flex-direction: column; gap: 4px; margin: 4px 0 12px; }
+.sk-tally-row { display: flex; align-items: center; gap: 8px; font-size: var(--fs-xs); }
+.sk-tally-k { flex: 0 0 190px; color: var(--fg-dim); overflow-wrap: anywhere; }
+.sk-tally-bar { flex: 1; height: 12px; background: rgba(0,0,0,.25); border: 1px solid var(--border); border-radius: 2px; overflow: hidden; }
+.sk-tally-bar > i { display: block; height: 100%; background: linear-gradient(90deg, rgba(105,173,69,.45), rgba(105,173,69,.95)); }
+.sk-tally-n { flex: none; min-width: 4em; text-align: right; font-family: var(--font-mono); color: var(--fg); }
+.sk-tally-row.na .sk-tally-bar > i { background: linear-gradient(90deg, rgba(120,120,130,.35), rgba(120,120,130,.8)); }
+
+/* ---------- 表 ---------- */
+.sk-chip {
+  font: inherit; font-size: var(--fs-xs); color: var(--fg-dim);
+  background: var(--bg-2); border: 1px solid var(--border); border-radius: 2px;
+  padding: 3px 9px; cursor: pointer; margin: 6px 0 0;
+}
+.sk-chip:hover { color: var(--fg); border-color: var(--border-light); }
+.sk-table { font-size: var(--fs-xs); }
+.sk-table th { background: var(--bg-2); color: var(--fg-dim); font-weight: 600; white-space: nowrap; padding: 7px 9px; }
+.sk-table td { padding: 5px 9px; border-bottom: 1px solid rgba(255,255,255,.05); color: var(--fg-dim); vertical-align: top; }
+.sk-table tbody tr:hover { background: rgba(255,255,255,.05); }
+.sk-table td.mono, .sk-table td .mono { font-family: var(--font-mono); }
+.sk-table small { color: var(--fg-faint); }
+.sk-scroll { overflow-x: auto; border: 1px solid var(--border); border-radius: 3px; background: var(--bg-1); }
+.sk-empty {
+  border: 1px dashed var(--border-light); border-radius: 3px;
+  color: var(--fg-dim); font-size: var(--fs-xs); text-align: center; padding: 22px 14px; line-height: 1.9;
+}
+
+/* ---------- 接线清单（给后来的 AI 看的操作提示）---------- */
+.sk-next {
+  border: 1px solid var(--green); background: rgba(105, 173, 69, .07);
+  border-radius: 3px; padding: 10px 13px; margin: 8px 0 12px;
+  font-size: var(--fs-xs); line-height: 1.9; color: var(--fg-dim);
+}
+.sk-next b { color: var(--green); }
+.sk-next ol { margin: 6px 0 0; padding-left: 20px; }
+.sk-next li { margin: 3px 0; }
+.sk-next code { color: var(--blue); }
+
+/* ---------- 口径说明 ---------- */
+.sk-caveats { border: 1px solid var(--border); border-radius: 3px; background: var(--bg-1); padding: 8px 12px; }
+.sk-caveat { font-size: var(--fs-xs); color: var(--fg-dim); line-height: 1.8; padding: 3px 0; border-bottom: 1px dashed var(--border); }
+.sk-caveat:last-child { border-bottom: none; }
+.sk-caveat > b:first-child { color: var(--gold); margin-right: 4px; }
+
+@media (max-width: 760px) {
+  .sk-tally-k { flex-basis: 120px; }
+}

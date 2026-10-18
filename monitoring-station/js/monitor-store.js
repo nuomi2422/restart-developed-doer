@@ -1,5 +1,9 @@
 var MonitorStore = (function () {
-  var pages = { overview: [], ai: [], context: [], tools: [], ac: [], rdd: [], environment: [], health: [], architecture: [], operations: [] };
+  // 2026-10-03 加 expmem：⑤.3「统一队列与学习者」要看 expmem.jsonl 的
+  // planning_knowledge / recalled / learned。之前 pages 里没有这个 key，
+  // add() 会把这三类事件全打到 overview 并 dropped++ —— 也就是说 225 条规划知识
+  // 事件一直进了缓冲区却永远没人显示。
+  var pages = { overview: [], ai: [], context: [], tools: [], ac: [], rdd: [], environment: [], health: [], architecture: [], operations: [], instrumentation: [], learner: [], expmem: [], settlement: [] };
   var current = "overview";
   var dropped = 0;
   var sequence = 0;
@@ -16,7 +20,7 @@ var MonitorStore = (function () {
     { category: "health", type: "heartbeat", text: "监测台自身心跳正常", payload: { status: "STABLE" } }
   ];
   function emit() { for (var i = 0; i < listeners.length; i++) { try { listeners[i](); } catch (e) {} } }
-  function add(event, quiet) {
+  function add(event) {
     var page = event.category || "overview";
     if (!pages[page]) { page = "overview"; dropped++; }
     event.sequence = ++sequence;
@@ -37,28 +41,22 @@ var MonitorStore = (function () {
       }
       pages[page].splice(remove, 1); dropped++;
     }
-    if (!quiet) emit();
-  }
-  function addMany(events) {
-    if (!Array.isArray(events) || !events.length) return;
-    for (var i = 0; i < events.length; i++) add(events[i] || {}, true);
     emit();
   }
   function accept(message) {
     if (!message) return;
     if (message.type === "event") add(message.payload || {});
-    else if (message.type === "events") addMany(message.payload || []);
-    else if (message.type === "connection") {
-      var next = message.payload || connection;
-      if (next.connected !== connection.connected || next.source !== connection.source) { connection = next; emit(); }
-    }
+    else if (message.type === "connection") { connection = message.payload || connection; emit(); }
     else if (message.type === "commandResult") { commandResults.push(message.payload || {}); if (commandResults.length > 100) commandResults.shift(); emit(); }
   }
   function clear() { pages[current] = []; emit(); }
-  function setPage(page) { if (pages[page] || ['supervisor', 'taskchain', 'numen', 'intro', 'docs'].indexOf(page) >= 0) { current = page; emit(); } }
+  // 子块 id 的白名单直接问 monitor-nav.js（单一真源）—— 原来这里手抄了 5 个 id，
+  // 加子块必漏。MonitorNav 在本脚本之后才加载，所以只能调用时再问，不能加载时算。
+  function navSubs() { return (typeof MonitorNav !== "undefined" && MonitorNav.subIds) ? MonitorNav.subIds() : []; }
+  function setPage(page) { if (pages[page] || navSubs().indexOf(page) >= 0) { current = page; emit(); } }
   function getEvents(page) { return (pages[page || current] || []).slice(); }
   function inject() { var e = fixtures[sequence % fixtures.length]; add({ category: e.category, type: e.type, text: e.text, payload: e.payload, source: "mock" }); }
   function subscribe(listener) { listeners.push(listener); }
   function stats() { var total = 0; for (var page in pages) total += pages[page].length; return { queue: total, dropped: dropped, sequence: sequence, connected: !!connection.connected, commandResults: commandResults.slice() }; }
-  return { accept: accept, add: add, addMany: addMany, clear: clear, setPage: setPage, getPage: function () { return current; }, getEvents: getEvents, inject: inject, subscribe: subscribe, stats: stats, health: function () { return connection; } };
+  return { accept: accept, add: add, clear: clear, setPage: setPage, getPage: function () { return current; }, getEvents: getEvents, inject: inject, subscribe: subscribe, stats: stats, health: function () { return connection; } };
 }());

@@ -3,10 +3,12 @@
 param(
     [string]$Requirement,
     [int]$MaxAttempts = 3,
+    [ValidateSet('test','gpt')][string]$Instance = 'test',
     [switch]$SkipLaunch,
     [switch]$SkipMcp
 )
 
+$env:RDD_SELF_COMPILE_INSTANCE = $Instance
 . "$PSScriptRoot\config.ps1"
 
 if (-not $Requirement) { $Requirement = "示例：注册一个 NumenTool" }
@@ -23,7 +25,12 @@ while ($attempt -lt $MaxAttempts) {
     Write-Output "----- 第 $attempt/$MaxAttempts 轮 -----"
 
     # 每轮一个独立 mutation-id（干净工作区）
-    $id = & "$PSScriptRoot\new-mutation.ps1" -Requirement "$Requirement [attempt $attempt]"
+    $id = & "$PSScriptRoot\new-mutation.ps1" -Requirement "$Requirement [attempt $attempt]" -Instance $Instance
+    if ($LASTEXITCODE -ne 0 -or @($id).Count -ne 1 -or [string]::IsNullOrWhiteSpace([string]$id)) {
+        Write-Output "创建 mutation 工作区失败，停止本轮循环"
+        $lastError = "mutation-workspace-failed"
+        break
+    }
     Write-Output "mutation-id: $id"
 
     # 编译打包
@@ -32,7 +39,7 @@ while ($attempt -lt $MaxAttempts) {
         Write-Output "编译失败: $buildOut"
         $lastError = "compile-failed"
         # 读编译日志
-        $log = Join-Path $Script:SC_MUTATIONS (Join-Path $id "phase-build.log")
+        $log = Join-Path $global:RDD_SC.SC_MUTATIONS (Join-Path $id "phase-build.log")
         if (Test-Path $log) { $lastError = (Get-Content $log -Raw | Select-Object -First 1) }
         continue   # 下一轮改码重试
     }

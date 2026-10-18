@@ -1,0 +1,117 @@
+/* ============================================================
+   状态机 / 脚本（AC）执行页
+   设计前提：这一页接上之后，「没接监测台导致看不了情况」这件事就解决了 ——
+   所以页面上必须显眼地回答三问：跑了多少次 / 成败各多少 / 卡在哪一步。
+   ============================================================ */
+
+.acx-sub { color: #8b95a3; font-size: 12px; margin: 2px 0 12px; }
+.acx-sub code { color: #7fb2e8; }
+
+.acx-cards { display: flex; flex-wrap: wrap; gap: 10px; margin: 8px 0 18px; }
+.acx-stat {
+  background: #16181d; border: 1px solid #2a2e36; border-radius: 6px;
+  padding: 8px 14px; min-width: 96px;
+}
+.acx-stat-k { color: #9aa4b2; font-size: 12px; }
+.acx-stat-v { font-size: 21px; font-weight: 600; margin-top: 2px; }
+.acx-stat.ok .acx-stat-v { color: #7fd6a2; }
+.acx-stat.bad .acx-stat-v { color: #f09090; }
+.acx-stat.warn .acx-stat-v { color: #e0c168; }
+.acx-stat.run .acx-stat-v { color: #7fb2e8; }
+
+/* ---- 事件种类 ---- */
+.acx-kinds { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 18px; }
+.acx-kind {
+  background: #12141a; border: 1px solid #2a2e36; border-radius: 3px;
+  padding: 2px 7px; font-size: 11px; color: #aab3bf;
+}
+.acx-kind b { color: #7fb2e8; font-weight: 500; margin-right: 4px; }
+
+/* ---- 运行记录 ---- */
+.acx-run { border: 1px solid #242830; border-radius: 5px; margin-bottom: 5px; }
+.acx-run.open { border-color: #3a4453; }
+.acx-run-head { display: flex; align-items: center; gap: 9px; padding: 6px 10px; cursor: pointer; }
+.acx-run-head:hover { background: rgba(255, 255, 255, .03); }
+.acx-caret { color: #7f8896; width: 12px; }
+.acx-run-name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.acx-run-id { color: #6f7885; font-size: 11px; }
+.acx-run-t { color: #9aa4b2; font-size: 12px; }
+.acx-run-ms { color: #9aa4b2; font-size: 12px; min-width: 64px; text-align: right; }
+.acx-run-body { border-top: 1px solid #242830; padding: 8px 12px 12px; }
+.acx-run-meta { display: flex; flex-wrap: wrap; gap: 14px; color: #9aa4b2; font-size: 12px; margin-bottom: 7px; }
+
+.acx-badge {
+  display: inline-block; border: 1px solid #3a3f49; border-radius: 3px;
+  padding: 0 6px; font-size: 11px; white-space: nowrap;
+}
+.acx-badge.ok { border-color: #2f7a4a; color: #7fd6a2; }
+.acx-badge.bad { border-color: #8a3232; color: #f09090; }
+.acx-badge.warn { border-color: #8a6d1f; color: #e0c168; }
+.acx-badge.run { border-color: #2f5f8a; color: #8fc4f0; }
+/* ★ 「状态不认识」单独一种颜色 —— 不许塌进成功或失败 */
+.acx-badge.unknown { border-color: #4a4a52; color: #9a9aa4; }
+
+/* ---- 每一步 ---- */
+.acx-step {
+  display: flex; align-items: baseline; gap: 9px;
+  padding: 2px 0 2px 8px; border-left: 3px solid #2a2e36; font-size: 12px;
+}
+.acx-step.ok { border-left-color: #2f7a4a; }
+.acx-step.bad { border-left-color: #a83c3c; }
+.acx-step.warn { border-left-color: #9a7a1f; }
+.acx-step.run { border-left-color: #2f6f9a; }
+.acx-step.muted { border-left-color: #4a4a52; opacity: .7; }
+/* ★ 「在飞」= 已受理、身体还在动。故意用蓝绿（run 的色系）而不是红/黄：
+   它既不是失败（红）也不是卡住（黄），塌进任何一边都会把两件事说成一件事。 */
+.acx-step.wait { border-left-color: #2f8f8a; }
+.acx-step-n { color: #6f7885; width: 18px; text-align: right; }
+.acx-step-id { min-width: 108px; color: #c3cad3; }
+.acx-step-st { min-width: 66px; color: #9aa4b2; }
+/* ★ 在飞的任务 id：让「脚本在等」=「在等 t9」，而不是读成「停了」 */
+.acx-step-task {
+  border: 1px solid #2f6f6a; border-radius: 3px; padding: 0 5px;
+  color: #7fd0c9; font-size: 11px; white-space: nowrap;
+}
+.acx-step-t { color: #6f7885; }
+.acx-step-note { color: #e0c168; min-width: 0; overflow-wrap: anywhere; }
+
+/* ---- 顶部更正框：先说清「失败」这个数字含不含「还在动」 ---- */
+.acx-caveat {
+  border: 1px solid #8a6d1f; background: #241f10; border-radius: 4px;
+  padding: 8px 11px; margin: 0 0 12px; font-size: 12px; line-height: 1.6;
+}
+.acx-caveat b { color: #e0c168; }
+.acx-caveat-why { color: #9aa4b2; margin-top: 4px; }
+.acx-stat.wait .acx-stat-v { color: #7fd0c9; }
+.acx-kind-split { display: block; color: #9aa4b2; font-style: normal; font-size: 11px; }
+
+.acx-empty { color: #8b95a3; padding: 14px 2px; line-height: 1.8; }
+.acx-err {
+  background: rgba(200, 70, 70, .10); border: 1px solid #8a3232;
+  border-radius: 5px; padding: 12px 14px; line-height: 1.8;
+}
+
+/* ---- 数据新鲜度条（第 5 组红线「历史 ≠ 当前」）：
+       它排在 caveat 之前，因为「读不到」会让下面每个数字都无效，
+       而「旧了」会让这些数字只代表过去。 ---- */
+.acx-fresh {
+  border: 1px solid #3a4450; background: #171c22; border-radius: 4px;
+  padding: 8px 11px; margin: 0 0 12px; font-size: 12px; line-height: 1.7;
+}
+.acx-fresh b { color: #cfd6e0; }
+.acx-fresh code { color: #9fb3c8; }
+.acx-fresh-verdict { color: #9aa4b2; margin-top: 4px; }
+.acx-fresh-oknote { color: #6f9a7a; }
+.acx-fresh-badnote { color: #e0a04a; }
+
+/* 旧但自洽（游戏和这份数据一起停的）：黄，不当失败 */
+.acx-fresh-old { border-color: #8a6d1f; background: #241f10; }
+.acx-fresh-old b { color: #e0c168; }
+
+/* 没跟上 / 早就断了：红边。它不是「失败」，是「这些数字不属于现在」 */
+.acx-fresh-bad { border-color: #8a3232; background: #241414; }
+.acx-fresh-bad b { color: #e08a8a; }
+
+/* 读不到：最重的一档 —— 它让整页数字失效，不是一句提醒 */
+.acx-fresh-gone { border-color: #a03030; background: #2a1010; }
+.acx-fresh-gone b { color: #ff9a9a; }

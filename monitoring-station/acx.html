@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>ACX 状态机 · 监测台</title>
+<style>
+  :root { color-scheme: dark; }
+  body { background:#0e1116; color:#dfe6ef; font:14px/1.5 "Segoe UI","Microsoft YaHei",sans-serif; margin:0; padding:18px 22px; }
+  h1 { font-size:18px; margin:0 0 4px; }
+  .sub { color:#8b98a8; font-size:12px; margin-bottom:14px; }
+  .totals { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px; }
+  .tot { background:#161b22; border:1px solid #232b36; border-radius:8px; padding:8px 12px; min-width:88px; }
+  .tot b { display:block; font-size:20px; }
+  .tot span { color:#8b98a8; font-size:11px; }
+  .run { background:#131820; border:1px solid #232b36; border-radius:10px; padding:12px 14px; margin-bottom:12px; }
+  .run h2 { font-size:14px; margin:0 0 2px; display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  .meta { color:#7d8b9c; font-size:11.5px; margin-bottom:8px; }
+  .badge { padding:1px 8px; border-radius:99px; font-size:11px; font-weight:600; }
+  .b-SUCCESS { background:#12351f; color:#5fd08a; }
+  .b-PAUSED  { background:#3a2f10; color:#e8c05a; }
+  .b-FAIL, .b-FAILED { background:#3a1618; color:#f0777a; }
+  .b-TIMEOUT { background:#3a2010; color:#f0a05a; }
+  .b-RUNNING{ background:#12283a; color:#6fb6f0; }
+  .b-REJECTED{ background:#2a1f36; color:#c79bf0; }
+  .steps { display:flex; flex-wrap:wrap; gap:6px; }
+  .step { border-radius:7px; padding:4px 8px; font-size:12px; border:1px solid #2a3340; background:#171d26; }
+  .step i { font-style:normal; color:#7d8b9c; font-size:10.5px; display:block; }
+  .s-ok { border-color:#1f6b43; background:#10241a; }
+  .s-running { border-color:#2b6c9c; background:#0f1c28; }
+  .s-paused, .s-guard, .s-stagnated, .s-maxiters { border-color:#7a5f18; background:#241d0e; }
+  .s-failed, .s-circuit, .s-verifybad, .s-refbad { border-color:#7a2b2f; background:#250f11; }
+  .s-ignored, .s-ifmiss { border-color:#3d4653; color:#9fb0c2; }
+  .why { color:#e8c05a; font-size:11.5px; margin-top:6px; }
+  .note { color:#8b98a8; font-size:11px; margin-top:4px; }
+  .empty { color:#7d8b9c; padding:30px; text-align:center; }
+  a { color:#6fb6f0; }
+</style>
+</head>
+<body>
+<h1>ACX 状态机 · 运行可见面</h1>
+<div class="sub">数据源：<code>config/numen/monitor/acx.jsonl</code>（ACX 执行器每次运行/每步/每次熔断都往这写一条）· 每 2 秒刷新 · <a href="/">← 回监测台主页</a></div>
+<div class="totals" id="totals"></div>
+<div id="runs"></div>
+
+<script>
+const COLORS = { ok:'#5fd08a', running:'#6fb6f0', paused:'#e8c05a', guard:'#e8c05a', stagnated:'#e8c05a', maxiters:'#e8c05a',
+                 failed:'#f0777a', circuit:'#f0777a', verifybad:'#f0777a', refbad:'#f0777a', ignored:'#9fb0c2', ifmiss:'#9fb0c2', pending:'#7d8b9c' };
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+function render(d) {
+  const t = d.totals || {};
+  document.getElementById('totals').innerHTML =
+    ['runs','success','paused','failed','timeout','running','rejected']
+      .map(k => '<div class="tot"><b>' + (t[k]||0) + '</b><span>' + k + '</span></div>').join('');
+
+  const runs = d.runs || [];
+  if (!runs.length) {
+    document.getElementById('runs').innerHTML =
+      '<div class="empty">还没有 ACX 事件。<br>说明：要么还没跑过 AC（去游戏里用 acx_execute 跑一条），要么 acx.jsonl 被轮转清空了。</div>';
+    return;
+  }
+  document.getElementById('runs').innerHTML = runs.map(r => {
+    const badge = '<span class="badge b-' + esc(r.status) + '">' + esc(r.status) + '</span>';
+    const steps = (r.steps||[]).map(s =>
+      '<div class="step s-' + esc(s.status) + '" title="' + esc(s.why||'') + '">' + esc(s.id) +
+      '<i>' + esc(s.status) + (s.notes && s.notes.length ? ' · ' + s.notes.length + ' 提示' : '') + '</i></div>'
+    ).join('');
+    const whys = (r.steps||[]).filter(s => s.why).map(s =>
+      '<div class="why">· ' + esc(s.id) + '：' + esc(s.why) + '</div>').join('');
+    const notes = (r.notes||[]).map(n => '<div class="note">! ' + esc(n.kind) + ' ' + esc(n.why||'') + '</div>').join('');
+    return '<div class="run"><h2>' + esc(r.ac_name) + ' ' + badge +
+      '<span class="meta">' + esc(r.run_id.slice(0,8)) + ' · 步数 ' + (r.steps||[]).length +
+      (r.elapsed_ms != null ? ' · ' + r.elapsed_ms + 'ms' : '') +
+      (r.loop_count != null ? ' · 循环 ' + r.loop_count + ' 轮' : '') + '</span></h2>' +
+      '<div class="steps">' + steps + '</div>' + whys + notes + '</div>';
+  }).join('');
+}
+
+async function tick() {
+  try {
+    const r = await fetch('/api/acx', { cache: 'no-store' });
+    render(await r.json());
+  } catch (e) {
+    document.getElementById('runs').innerHTML = '<div class="empty">取不到 /api/acx：' + esc(e.message) + '</div>';
+  }
+}
+tick(); setInterval(tick, 2000);
+</script>
+</body>
+</html>

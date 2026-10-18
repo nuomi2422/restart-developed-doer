@@ -83,3 +83,47 @@ summary{cursor:pointer;color:var(--fg);overflow-wrap:anywhere;line-height:1.6}
 .audit-actor .card-title,.card-title{font-size:calc(15px * var(--ui-font-scale))}
 .sub-row{font-size:calc(13px * var(--ui-font-scale));padding:calc(8px * var(--ui-font-scale)) calc(10px * var(--ui-font-scale))}
 @media(max-width:760px){.font-control{margin-left:auto}.task-flow .node{flex-basis:75vw}.monitor-toolbar{flex-wrap:wrap}.page-intro h2{font-size:calc(19px * var(--ui-font-scale))}}
+
+/* 埋点异常高亮（第八系统分页） */
+.event-row.instr-anom { background: rgba(210,70,70,.14); border-left: 3px solid #d24646; }
+.event-row.instr-anom .type { color: #ff8a8a; font-weight: 600; }
+
+
+.btn.paused{color:var(--amber);border-color:var(--amber)}.btn.paused:hover{border-color:var(--amber)}#freeze-badge{pointer-events:none}.monitor-toolbar .btn{border-radius:3px}
+/* ============================================================
+   2026-10-03 两级导航 + 常驻子视图容器
+   ------------------------------------------------------------
+   一级 .zone-tabs：五个分析区块，字大、带序号，选中态用金色底。
+   二级 .sub-tabs ：当前区块的子块，字小、左缩进 + 左边框表示从属。
+   .sub-gloss     ：子块的一句话说明。
+   .subview       ：chain / experience-chain / explib / acx 四个独立 view
+                    的常驻容器。必须常驻 —— 那些 view 在 init() 时抓住
+                    容器句柄并往里写，容器被 innerHTML 冲掉等于把它们的
+                    输出擦掉（这就是那四个页签一直空白的根因）。
+   ============================================================ */
+.zone-tabs{flex:none;display:flex;gap:4px;flex-wrap:wrap;padding:6px 8px 0;background:var(--bg-2);border-bottom:1px solid var(--border-strong)}
+.zone-tabs button{padding:8px 14px;color:var(--fg-dim);background:transparent;border:1px solid transparent;border-bottom:none;border-radius:4px 4px 0 0;font-family:var(--font-brand);letter-spacing:.06em}
+.zone-tabs button:hover{color:var(--fg);background:rgba(255,255,255,.04)}
+.zone-tabs button.active{color:var(--gold);background:var(--bg-1);border-color:var(--border-strong);font-weight:600}
+.zone-tabs button .z-no{opacity:.7;margin-right:6px}
+.zone-tabs .zone-link{display:inline-flex;align-items:center;padding:8px 12px;color:var(--fg-faint);text-decoration:none;border:1px dashed var(--border);border-radius:4px 4px 0 0;font-size:12px}
+.zone-tabs .zone-link:hover{color:var(--fg);border-color:var(--accent)}
+
+.sub-tabs{flex:none;display:flex;gap:2px;flex-wrap:wrap;padding:5px 8px 5px 14px;background:var(--bg-1);border-bottom:1px solid var(--border)}
+.sub-tabs button{padding:5px 11px;color:var(--fg-dim);background:var(--bg-2);border:1px solid var(--border);border-left:3px solid var(--border);border-radius:0 3px 3px 0}
+.sub-tabs button:hover{color:var(--fg);border-left-color:var(--accent)}
+.sub-tabs button.active{color:var(--fg);background:var(--bg-2);border-left-color:var(--gold);font-weight:600}
+
+.sub-gloss{flex:none;padding:6px 14px;background:var(--bg-1);border-bottom:1px solid var(--border);color:var(--fg-faint);font-size:12px;line-height:1.6}
+.sub-gloss b{color:var(--gold);font-weight:600;margin-right:8px}
+
+/* .grid 是 display:flex，会盖掉 [hidden] 的 display:none —— 必须显式压回去 */
+.monitor-content .subview[hidden]{display:none}
+.monitor-content .subview{padding:2px 0 10px}
+
+@media(max-width:900px){
+  .zone-tabs{overflow-x:auto;flex-wrap:nowrap}
+  .zone-tabs button{white-space:nowrap}
+  .sub-tabs{overflow-x:auto;flex-wrap:nowrap}
+  .sub-tabs button{white-space:nowrap}
+}

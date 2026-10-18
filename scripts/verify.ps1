@@ -1,14 +1,18 @@
 ﻿# 读监测台 + 世界/事件对撞，判定验证结论
-param([string]$MutationId)
+param(
+    [string]$MutationId,
+    [ValidateSet('test','gpt')][string]$Instance = $env:RDD_SELF_COMPILE_INSTANCE
+)
 
+$env:RDD_SELF_COMPILE_INSTANCE = if ($Instance) { $Instance } else { 'test' }
 . "$PSScriptRoot\config.ps1"
 
-$dir = Join-Path $Script:SC_MUTATIONS $MutationId
+$dir = Join-Path $global:RDD_SC.SC_MUTATIONS $MutationId
 if (-not (Test-Path $dir)) { throw "mutation not found: $dir" }
 
 $snapshot = $null
 try {
-    $snapshot = Invoke-RestMethod -Uri "$($Script:MONITOR_URL)/api/snapshot" -Method Get -TimeoutSec 30
+    $snapshot = Invoke-RestMethod -Uri "$($global:RDD_SC.MONITOR_URL)/api/snapshot" -Method Get -TimeoutSec 30
 } catch {
     $snapshot = @{ total = 0; error = $_.Exception.Message }
 }
@@ -25,26 +29,42 @@ $hasEvents = $total -gt 0
 $evidenceDir = Join-Path $dir "evidence"
 $required = @("deployed.json","mc_loaded.json","tool_registered.json","mcp_call_success.json","world_effect_verified.json")
 $missing = @()
+# 2026-09-29 修复：原先只看「文件存在」，不看里面的 ok 字段 ——
+# 于是 collect-evidence 明明记了 {"ok":false,"detail":"tool returned isError"}，
+# verify 照样给 VERIFIED。形式通过 = 假通过，正是 flow-gate/verify 这类门禁最该防的事。
+$failed = @()
 if (Test-Path $evidenceDir) {
-    foreach ($f in $required) { if (-not (Test-Path (Join-Path $evidenceDir $f))) { $missing += $f } }
+    foreach ($f in $required) {
+        $p = Join-Path $evidenceDir $f
+        if (-not (Test-Path $p)) { $missing += $f; continue }
+        $ok = $false
+        try { $ok = [bool]((Get-Content -LiteralPath $p -Raw -Encoding UTF8 | ConvertFrom-Json).ok) }
+        catch { $ok = $false }
+        if (-not $ok) { $failed += $f }
+    }
 } else {
     $missing = @("NO_EVIDENCE_DIR")
 }
-$evidenceOk = $missing.Count -eq 0
-$verified = if ($evidenceOk) { $true } elseif ($missing[0] -eq "NO_EVIDENCE_DIR" -and $hasEvents) { $true } else { $false }
+$evidenceOk = ($missing.Count -eq 0) -and ($failed.Count -eq 0)
+# Events prove only that something was observed; they never substitute for
+# deployed/tool/world evidence. Historical fallback caused false VERIFIED.
+$verified = $evidenceOk
 
 $verdict = @{
     verdict = if ($verified) { "VERIFIED" } else { "UNVERIFIED" }
     stage = "verify"
     evidenceChain = $evidenceOk
     missingEvidence = $missing
+    failedEvidence = $failed
     monitorTotal = $total
     hasEvents = $hasEvents
-    monitorDir = $Script:MONITOR_DIR
+    monitorDir = $global:RDD_SC.MONITOR_DIR
+    instance = $global:RDD_SC.SC_INSTANCE
+    mcpPort = $global:RDD_SC.MCP_PORT
     snapshotSavedTo = $snapPath
     checkedAt = (Get-Date).ToString("o")
     note = if ($evidenceOk) { "证据链完整：$($required -join ',')" }
-           elseif ($missing[0] -eq "NO_EVIDENCE_DIR") { "无 evidence 目录，回退 hasEvents（旧流程，建议接入证据链）" }
+           elseif ($missing[0] -eq "NO_EVIDENCE_DIR") { "无 evidence 目录；监测事件不能替代验证证据" }
            elseif ($hasEvents) { "证据链缺失：$($missing -join ',')" }
            else { "监测台无事件，需检查游戏/MCP 是否就绪" }
     state = if ($verified) { "VERIFIED" } else { "FAILED" }
