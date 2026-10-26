@@ -7,11 +7,11 @@ const { chromium } = require('playwright');
 //   node brain-drive.js gpt "问题文本"          → ChatGPT 发消息并读回复
 //   node brain-drive.js reset-profile          → 清外脑专用 profile 缓存（cookies 保留）
 
-const PROFILE = "C:\\Users\\lenovo\\.playwright-profile";
+const PROFILE = "C:\\Users\\admin\\.playwright-profile";
 // 固定会话勿换：DeepSeek 审核对话（全源码上下文在此）。绝不要 goto 首页（会新开空白对话丢上下文）。
 const DS_URL = "https://chat.deepseek.com/a/chat/s/f0791612-ae66-4a67-8aeb-b60c1f692bbc";
 const GPT_URL = "https://chatgpt.com/";
-const REPLY_DIR = "C:\\Users\\lenovo\\AppData\\Local\\Temp\\opencode\\brain-replies";
+const REPLY_DIR = "C:\\Users\\admin\\AppData\\Local\\Temp\\opencode\\brain-replies";
 
 function saveReply(tag, text, meta) {
   const fs = require('fs');

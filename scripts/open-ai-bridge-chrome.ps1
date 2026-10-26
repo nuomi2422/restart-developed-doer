@@ -9,7 +9,7 @@
 
 param(
   [string]$Chrome = "C:\Program Files\Google\Chrome\Application\chrome.exe",
-  [string]$ProfileDir = "C:\Users\lenovo\.config\ai-bridge\chrome-profile",
+  [string]$ProfileDir = "C:\Users\admin\.config\ai-bridge\chrome-profile",
   [string]$Url = "https://chatgpt.com/",
   [switch]$KeepAlive
 )

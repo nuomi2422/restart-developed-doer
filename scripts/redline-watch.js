@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 
 const cfgPath = process.env.NUMEN_MCP_CONFIG ||
-  'E:\\.minecraft\\versions\\The Best of Twilight Forest\\config\\numen\\mcp_server.json';
+  'D:\\rdd\\mc\\The Best of Twilight Forest\\config\\numen\\mcp_server.json';
 let cfg;
 try {
   cfg = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));

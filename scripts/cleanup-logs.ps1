@@ -16,7 +16,7 @@
 # 用法：
 #   powershell -NoProfile -ExecutionPolicy Bypass -File cleanup-logs.ps1           # 只报告
 #   powershell ... -File cleanup-logs.ps1 -Apply                                   # 执行
-#   powershell ... -File cleanup-logs.ps1 -InstanceDir "E:\.minecraft\versions\The Best of Twilight Forest"
+#   powershell ... -File cleanup-logs.ps1 -InstanceDir "D:\rdd\mc\The Best of Twilight Forest"
 #
 # 保留策略（可用参数覆盖）：
 #   ContextKeep=10  最大的 10 个 context-*.jsonl 保留，其余删
@@ -25,8 +25,8 @@
 # ============================================================================
 [CmdletBinding()]
 param(
-    [string]$InstanceDir = "E:\.minecraft\versions\The Best of Twilight Forest",
-    [string]$RuntimeDir  = "E:\restart developing doer\rdd-selfcompile",
+    [string]$InstanceDir = "D:\rdd\mc\The Best of Twilight Forest",
+    [string]$RuntimeDir  = "D:\rdd\workspace\rdd-selfcompile",
     [string]$BackupDir   = "$env:USERPROFILE\.config\opencode\AGENTS.backup",
     [int]$ContextKeep = 10,
     [int]$RddKeep = 5,

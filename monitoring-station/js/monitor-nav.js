@@ -64,6 +64,7 @@ var MonitorNav = (function () {
         { id: "branches", label: "3.3 支线", desc: "每个一级阶段下面挂的二级小步、它们的完成条件，以及卡住 / 恢复 / 等资产的支线信号。" },
         { id: "gaps", label: "3.4 断点与缺口", desc: "走独立 /api/chain：死亡链、规划缺口、注入缺口、经验库缺口、断点置顶。游戏没跑也看得到。" },
         { id: "supervision", label: "3.5 监督开关", desc: "暂停 / 恢复监督（空转止血）。写游戏端 flag，Detector ~1 秒心跳生效。" }
+        ,{ id: "semantics", label: "3.6 语义资产", desc: "rdd-semantics：这个东西为什么对这个目标重要（IMPORTANT/SECONDARY/IRRELEVANT），派生自需求清单。只读，不写回语义。" }
       ]
     },
     {

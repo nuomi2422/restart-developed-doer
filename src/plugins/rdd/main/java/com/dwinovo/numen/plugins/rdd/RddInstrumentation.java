@@ -108,6 +108,14 @@ public final class RddInstrumentation {
                 rotate(dir, file);
             }
             long seq = EVENT_SEQ.incrementAndGet();
+            // ★★ 2026-10-26 根因修复：event_id 必须是<b>全局唯一</b>。
+            // 旧写法 "instr-" + seq 的 seq 每 JVM 归 0（EVENT_SEQ 是静态 AtomicLong），
+            // 于是跨会话 instr-1/instr-2/... 反复冲突 → learner 的 auto_intake 按 event_id
+            // 去重时把新事件全当重复（昨晚 12 轮 enqueued_by_companion 恒 {} 的真凶）。
+            // 同仓其余 6 个 monitor（rdd/worldstate/learner/experience/acx/settlement）
+            // 都用 System.nanoTime() 保证唯一，唯独这里用计数器——修成一致的形状：
+            // nanoTime（跨会话唯一）+ seq（会话内唯一）双保险。
+            String eventId = "instr-" + System.nanoTime() + "-" + seq;
             // ★ B6：死亡类事件先把「这个同伴最近发生了什么」冻结进同一行（快照本身不入窗口）。
             //   快照在推进窗口**之前**取，所以里面只有「死亡之前」的事 —— 这才是「怎么走到死的」。
             String companion = companionOf(data);
@@ -116,7 +124,7 @@ public final class RddInstrumentation {
             if (isDeathType(type) && ring != null) {
                 dataWithDropped.putAll(ring.snapshot().toMap());
             }
-            String line = InstrumentationEvents.line("instr-" + seq, type, gameTimeTicks, dataWithDropped);
+            String line = InstrumentationEvents.line(eventId, type, gameTimeTicks, dataWithDropped);
             Files.writeString(file, line + "\n", StandardCharsets.UTF_8,
                     StandardOpenOption.CREATE, StandardOpenOption.APPEND);
             WRITTEN.incrementAndGet();

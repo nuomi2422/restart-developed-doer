@@ -11,9 +11,9 @@
 
 | 摊 | 位置（旧） | 内容 |
 |---|---|---|
-| ① 原设计/原档 | `E:\新建文件夹\rdd-docs\rdd架构\自编译系统\` | 全量设计：ai-roles / architecture / bridge / checklists / deployment / engineering-standards / heartbeat / monitor-watchdog / mutation / self-compile / runtime / testing / templates + Codex指挥官规范 / implementation-plan 等 |
-| ② 汇总索引 | `E:\新建文件夹\rdd-docs\rdd架构\自变异系统v3\` | 派生快照 + INDEX + 更新日志 |
-| ③ 运行时真源 | `E:\restart developing doer\rdd-selfcompile\` | 只有 scripts / mutations / instances / report / templates / ai-bridge |
+| ① 原设计/原档 | `D:\rdd\docs\rdd-docs\rdd架构\自编译系统\` | 全量设计：ai-roles / architecture / bridge / checklists / deployment / engineering-standards / heartbeat / monitor-watchdog / mutation / self-compile / runtime / testing / templates + Codex指挥官规范 / implementation-plan 等 |
+| ② 汇总索引 | `D:\rdd\docs\rdd-docs\rdd架构\自变异系统v3\` | 派生快照 + INDEX + 更新日志 |
+| ③ 运行时真源 | `D:\rdd\workspace\rdd-selfcompile\` | 只有 scripts / mutations / instances / report / templates / ai-bridge |
 
 **断点**：①/② 都自称「统一入口」；② 索引未收录 ① 的大量设计文档；文档机制（模块回滚存储）运行时没有；`heartbeat/monitor-watchdog` 与运行时 `every-10min-drive/mc-watchdog` 名字分叉。
 本目录 = 三摊的**映射 + 规范 + 清单 + 指南**，一处看清「设计 ↔ 运行」。
@@ -26,15 +26,15 @@
 
 | 方位 | 位置 | 定位 | 遇到它该做什么 |
 |---|---|---|---|
-| **本目录 = 单点入口** | `E:\新建文件夹\rdd-docs\rdd架构\自编译统一版\` | **唯一入口**：规范 / 流程 / 清单 / 索引 / 指南 | **任何 AI 第一站**：读工作区根 `AGENTS.md` → 本文件 → `50-按主题导航.md`（INDEX.md 已于 2026-09-30 并入 AGENTS.md 并退役，备份 `_INDEX-已并入AGENTS-20260930.md.bak`） |
-| **① 设计原档** | `E:\新建文件夹\rdd-docs\rdd架构\自编译系统\` | 全量**历史设计**（ai-roles / architecture / bridge / heartbeat / monitor-watchdog / self-compile / implementation-plan 等） | 只在**要查设计细节**时读。**不是入口**。已加 `_统一版指针.md` + README 顶部弃用横幅 |
-| **② 快照** | `E:\新建文件夹\rdd-docs\rdd架构\自变异系统v3\` | ①的**派生快照** + 旧 INDEX + 旧更新日志 | 只作**历史对照/回溯**。**不是入口**。已加 `_统一版指针.md` |
-| **③ 运行时真源** | `E:\restart developing doer\rdd-selfcompile\` | **实际生效的** scripts / mutations / instances / report / selfcompile store | 改代码、跑命令、判状态**只认这里**。**不是入口** |
+| **本目录 = 单点入口** | `D:\rdd\docs\rdd-docs\rdd架构\自编译统一版\` | **唯一入口**：规范 / 流程 / 清单 / 索引 / 指南 | **任何 AI 第一站**：读工作区根 `AGENTS.md` → 本文件 → `50-按主题导航.md`（INDEX.md 已于 2026-09-30 并入 AGENTS.md 并退役，备份 `_INDEX-已并入AGENTS-20260930.md.bak`） |
+| **① 设计原档** | `D:\rdd\docs\rdd-docs\rdd架构\自编译系统\` | 全量**历史设计**（ai-roles / architecture / bridge / heartbeat / monitor-watchdog / self-compile / implementation-plan 等） | 只在**要查设计细节**时读。**不是入口**。已加 `_统一版指针.md` + README 顶部弃用横幅 |
+| **② 快照** | `D:\rdd\docs\rdd-docs\rdd架构\自变异系统v3\` | ①的**派生快照** + 旧 INDEX + 旧更新日志 | 只作**历史对照/回溯**。**不是入口**。已加 `_统一版指针.md` |
+| **③ 运行时真源** | `D:\rdd\workspace\rdd-selfcompile\` | **实际生效的** scripts / mutations / instances / report / selfcompile store | 改代码、跑命令、判状态**只认这里**。**不是入口** |
 
 **铁律**：
 1. 「统一入口 / 单点入口」**只能指本目录**；① ② ③ 一律是"被索引的方位"，不得自称入口。
 2. 设计名 vs 运行时名冲突时，**运行时名为准**（`heartbeat`→`every-10min-drive`、`monitor-watchdog`→`mc-watchdog`、`numen-mcp-call.py`→`numen-mcp.js`）→ 明细见 `00-总索引.md`。
-3. 要用户看的副本在 `E:\新建文件夹\rdd-docs\rdd存放\`（收件夹），**原位照旧保留**。
+3. 要用户看的副本在 `D:\rdd\docs\rdd-docs\rdd存放\`（收件夹），**原位照旧保留**。
 
 ---
 
@@ -101,7 +101,7 @@
 | `30-主要功能不回退清单.md` | **主要功能不回退清单**（M1-M5 主链路 + RL-1..RL-9） |
 | `31-协商通道与optional-维护说明-20260929.md` | 协商通道 + optional 通用化：维护说明（改了哪/为什么/怎么调） |
 | `32-下一轮计划-20260929.md` | 下一轮计划（轮回起点，未完成项清单） |
-| `rdd存放/`（用户面） | `E:\新建文件夹\rdd-docs\rdd存放\`：人工模式收件/看件夹 |
+| `rdd存放/`（用户面） | `D:\rdd\docs\rdd-docs\rdd存放\`：人工模式收件/看件夹 |
 
 ---
 

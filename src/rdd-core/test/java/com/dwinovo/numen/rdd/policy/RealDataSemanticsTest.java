@@ -41,7 +41,7 @@ class RealDataSemanticsTest {
         if (override != null && !override.isBlank()) {
             return Path.of(override);
         }
-        return Path.of("E:\\.minecraft\\versions\\The Best of Twilight Forest\\config\\numen\\rdd-facts");
+        return Path.of("D:\\rdd\\mc\\The Best of Twilight Forest\\config\\numen\\rdd-facts");
     }
 
     private static Path anyRealFactsFile() throws IOException {

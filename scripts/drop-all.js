@@ -2,7 +2,7 @@
 // 用法: node drop-all.js [companion=rdd]
 const http = require('http');
 const fs = require('fs');
-const cfg = JSON.parse(fs.readFileSync('E:\\.minecraft\\versions\\The Best of Twilight Forest\\config\\numen\\mcp_server.json', 'utf8'));
+const cfg = JSON.parse(fs.readFileSync('D:\\rdd\\mc\\The Best of Twilight Forest\\config\\numen\\mcp_server.json', 'utf8'));
 const COMP = process.argv[2] || 'rdd';
 const KEEP = new Set(['maidmarriage:heart_pact_guide', 'touhou_little_maid:smart_slab_init']);
 function post(body, sid) {

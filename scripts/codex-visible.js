@@ -49,14 +49,14 @@ if (!prompt) {
   process.exit(2);
 }
 
-const cwd = flag('--cwd', 'E:/restart developing doer/minecraft-numen');
+const cwd = flag('--cwd', 'D:/rdd/workspace/minecraft-numen');
 const sandbox = flag('--sandbox', 'read-only');
 const model = flag('--model', '');
 const timeoutSec = parseInt(flag('--timeout', '900'), 10);
 const quiet = has('--quiet');
 
 const EXE = process.env.CODEX_EXE ||
-  'C:/Users/lenovo/AppData/Local/OpenAI/Codex/bin/d23520d1e41bfb24/codex.exe';
+  'C:/Users/admin/AppData/Local/OpenAI/Codex/bin/d23520d1e41bfb24/codex.exe';
 if (!fs.existsSync(EXE)) { console.error('[X] codex.exe 不存在: ' + EXE); process.exit(2); }
 
 const outFile = path.join(os.tmpdir(), 'codex-visible-' + Date.now() + '.txt');

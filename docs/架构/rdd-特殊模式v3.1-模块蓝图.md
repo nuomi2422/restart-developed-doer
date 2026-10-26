@@ -141,7 +141,7 @@ ARCH_STRESS     全模块后架构级长跑压测
 ### 4.8 数据落盘契约（建议）
 
 ```
-E:\新建文件夹\rdd-docs\rdd架构\特殊模式\
+D:\rdd\docs\rdd-docs\rdd架构\特殊模式\
   <模块名>\
     01-intent.md           用户意图（原话）
     02-req-draft.md        O 工程文档草案

@@ -10,7 +10,7 @@
 //   node ai-talk.js 30 --gaps           -> silence gaps between utterances (>45s)
 const fs = require('fs');
 const path = require('path');
-const MON = 'E:\\.minecraft\\versions\\The Best of Twilight Forest\\config\\numen\\monitor';
+const MON = 'D:\\rdd\\mc\\The Best of Twilight Forest\\config\\numen\\monitor';
 
 const MINS = parseFloat(process.argv[2] || '30');
 const SUS = process.argv.includes('--suspicious');

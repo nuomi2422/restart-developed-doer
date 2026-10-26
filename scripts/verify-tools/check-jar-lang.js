@@ -21,7 +21,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-const LIVE_MODS = 'E:\\.minecraft\\versions\\The Best of Twilight Forest\\mods';
+const LIVE_MODS = 'D:\\rdd\\mc\\The Best of Twilight Forest\\mods';
 const WANTED = ['assets/numen_api/lang/en_us.json', 'assets/numen_api/lang/zh_cn.json'];
 
 function parseArgs(argv) {

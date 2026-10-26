@@ -38,11 +38,11 @@
 ## 怎么接入（对别的 AI）
 
 ```text
-仓库：  E:\restart developing doer\minecraft-numen（分支 1.21.1）
-观测：  E:\.minecraft\versions\The Best of Twilight Forest\config\numen\monitor\*.jsonl
+仓库：  D:\rdd\workspace\minecraft-numen（分支 1.21.1）
+观测：  D:\rdd\mc\The Best of Twilight Forest\config\numen\monitor\*.jsonl
 MCP：   127.0.0.1:8765（token 在 config/numen/mcp_server.json）
 监测台：node monitoring-station\server.mjs → http://127.0.0.1:8776
-外部编排：E:\restart developing doer\rdd-selfcompile\scripts（run-mutation 等）
+外部编排：D:\rdd\workspace\rdd-selfcompile\scripts（run-mutation 等）
 ```
 
 ## 详细文档（切到"文档"分页看全文）
@@ -59,6 +59,6 @@ HANDOFF.md        交接文档
 ## 关键文件
 
 ```text
-运行报告（2026-08-31 自主批次）：E:\新建文件夹\rdd架构\batch-run-20260831-autonomous.md
-架构决策：E:\新建文件夹\rdd架构\*.md
+运行报告（2026-08-31 自主批次）：D:\rdd\docs\rdd-docs\rdd架构\batch-run-20260831-autonomous.md
+架构决策：D:\rdd\docs\rdd-docs\rdd架构\*.md
 ```

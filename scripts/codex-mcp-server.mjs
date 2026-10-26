@@ -24,8 +24,8 @@ import path from 'node:path';
 import readline from 'node:readline';
 
 const CODEX_EXE = process.env.CODEX_EXE ||
-  'C:\\Users\\lenovo\\AppData\\Local\\OpenAI\\Codex\\bin\\d23520d1e41bfb24\\codex.exe';
-const DEFAULT_CWD = process.env.CODEX_CWD || 'E:\\restart developing doer\\minecraft-numen';
+  'C:\\Users\\admin\\AppData\\Local\\OpenAI\\Codex\\bin\\d23520d1e41bfb24\\codex.exe';
+const DEFAULT_CWD = process.env.CODEX_CWD || 'D:\\rdd\\workspace\\minecraft-numen';
 const TIMEOUT_MS = parseInt(process.env.CODEX_TIMEOUT_MS || '1200000', 10);
 
 function log(...a) { process.stderr.write('[codex-bridge] ' + a.join(' ') + '\n'); }

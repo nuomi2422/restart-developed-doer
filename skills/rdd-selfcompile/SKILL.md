@@ -26,7 +26,7 @@ usage_frequency: weekly
 
 ```text
 外部编排层（不进 Numen 仓库）：
-E:\restart developing doer\rdd-selfcompile\
+D:\rdd\workspace\rdd-selfcompile\
 ├── scripts\
 │   ├── config.ps1             ← 公共配置（路径/端口/token/代理）
 │   ├── run-mutation.ps1       ← 单轮闭环入口
@@ -42,7 +42,7 @@ E:\restart developing doer\rdd-selfcompile\
 └── mutations\                  ← 每次变异工作区
 
 Numen 侧插件：
-E:\restart developing doer\minecraft-numen\plugins\selfcompile\
+D:\rdd\workspace\minecraft-numen\plugins\selfcompile\
 └── src\main\java\...\selfcompile\
     ├── SelfCompileEntry.java   ← 插件注册 + 生成工具登记
     ├── SelfCompileMonitor.java ← 自写 ai.jsonl 观测
@@ -66,7 +66,7 @@ MCP:      config/numen/mcp_server.json → 127.0.0.1:8765（enabled=true 需重�
 ## 单轮闭环（期1）
 
 ```powershell
-& "E:\restart developing doer\rdd-selfcompile\scripts\run-mutation.ps1" -Requirement "你的需求"
+& "D:\rdd\workspace\rdd-selfcompile\scripts\run-mutation.ps1" -Requirement "你的需求"
 ```
 
 流程：
@@ -86,7 +86,7 @@ MCP:      config/numen/mcp_server.json → 127.0.0.1:8765（enabled=true 需重�
 ## 止损循环（期3）
 
 ```powershell
-& "E:\restart developing doer\rdd-selfcompile\scripts\run-mutation-loop.ps1" -Requirement "xxx" -MaxAttempts 3
+& "D:\rdd\workspace\rdd-selfcompile\scripts\run-mutation-loop.ps1" -Requirement "xxx" -MaxAttempts 3
 ```
 
 每轮独立 mutation 工作区；编译失败记录错误 → 下一轮重试；N 轮均失败 → 止损 exit 1。
@@ -107,10 +107,10 @@ MCP:      config/numen/mcp_server.json → 127.0.0.1:8765（enabled=true 需重�
 4. 干完后记录会话摘要，后续都用这个已养好的窗口继续。
 5. 用法详见记忆 `dd-deepseek-web-playwright`；GitHub/网页验证可用 `websearch`/`webfetch`。
 
-**驱动脚本**（`scripts\brain-drive.js`，依赖 `@playwright\mcp\node_modules` 内的 playwright，经 `channel:'msedge'` 驱动 Edge 持久化 profile `C:\Users\lenovo\.playwright-profile`）：
+**驱动脚本**（`scripts\brain-drive.js`，依赖 `@playwright\mcp\node_modules` 内的 playwright，经 `channel:'msedge'` 驱动 Edge 持久化 profile `C:\Users\admin\.playwright-profile`）：
 
 ```powershell
-$env:NODE_PATH="D:\nodejs\global\node_modules\@playwright\mcp\node_modules"
+$env:NODE_PATH="D:\rdd\tools\node\global\node_modules\@playwright\mcp\node_modules"
 node scripts\brain-drive.js probe                                   # 枚举窗口/标签
 node scripts\brain-drive.js ds "问题"                               # DeepSeek 发问（首次需在浏览器手签登录）
 node scripts\brain-drive.js gpt "问题"                              # ChatGPT 免登录发问（自动清 openai cookie）
@@ -173,7 +173,7 @@ SelfCompileMonitor 每次 selfcompile_request 写 ai.jsonl（自变异活动可�
 **改代码走安全通道**（唯一入口，自动编译 + 部署 + 重启）：
 
 ```powershell
-& "E:\restart developing doer\rdd-selfcompile\scripts\run-mutation.ps1" -Requirement "<刚才看到的问题>" -Module <模块>
+& "D:\rdd\workspace\rdd-selfcompile\scripts\run-mutation.ps1" -Requirement "<刚才看到的问题>" -Module <模块>
 ```
 
 **改之前必做三件**：备份原文件 · 说清改了多少、会不会引起什么问题 · 打版本标记。不能乱改。
@@ -237,4 +237,4 @@ node rdd-selfcompile\scripts\verify-tools\analyze-ai-behavior.js --since 6h   # 
 
 ## 交接
 
-完整交接见 `E:\新建文件夹\rdd架构\self-compile-handoff.md`。开工先读它 + `self-compile-module.md`。
+完整交接见 `D:\rdd\docs\rdd-docs\rdd架构\self-compile-handoff.md`。开工先读它 + `self-compile-module.md`。

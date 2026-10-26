@@ -19,8 +19,8 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-if (-not $Cwd) { $Cwd = if ($env:CODEX_CWD) { $env:CODEX_CWD } else { 'E:\restart developing doer\minecraft-numen' } }
-if (-not $CodexExe) { $CodexExe = if ($env:CODEX_EXE) { $env:CODEX_EXE } else { 'C:\Users\lenovo\AppData\Local\OpenAI\Codex\bin\d23520d1e41bfb24\codex.exe' } }
+if (-not $Cwd) { $Cwd = if ($env:CODEX_CWD) { $env:CODEX_CWD } else { 'D:\rdd\workspace\minecraft-numen' } }
+if (-not $CodexExe) { $CodexExe = if ($env:CODEX_EXE) { $env:CODEX_EXE } else { 'C:\Users\admin\AppData\Local\OpenAI\Codex\bin\d23520d1e41bfb24\codex.exe' } }
 if (-not (Test-Path -LiteralPath $CodexExe)) { Write-Error "codex not found: $CodexExe"; exit 2 }
 
 if ($Mode -eq 'health') {

@@ -11,7 +11,7 @@
 - [ ] 真实命令验证 `command_id → commandResult`
 - [ ] 断线、恢复、超大消息、慢消费者有明确状态
 - [x] ~~原有 `agent-console` 聊天、工作区和任务控制不退化~~ → **2026-10-03 作废**：`agent-console/`
-      在本仓库是 404 陈旧副本（其 `HANDOFF.md` 里写的还是 `E:\TouhouLittleMaid-HeartPact\agent-console\`），
+      在本仓库是 404 陈旧副本（其 `HANDOFF.md` 里写的还是 `D:\rdd\upstream\TouhouLittleMaid-HeartPact\agent-console\`），
       6 个页面从未被主控接起来，已按用户决定 `git rm -r` 删除。
 
 本轮样板只能验收 UI/契约/分区数据层；RDD/Newman/MC 端到端项目需提供真实 Adapter 后另行验收。
@@ -103,7 +103,7 @@
   该文件由 53 行重写到 167 行，新增 `openSub()` / `waitHost()` / `expectText()` / `assertNoUndefined()`。
   诊断过程中发现 `emit()` 的 `try{}catch(e){}` 会吞掉 render 异常，**页面上看不到 JS 报错**，
   所以 debug 脚本改成劫持 `MonitorStore.subscribe` 把 `render()` 包起来记录抛错。
-- 备份对照：`E:\新建文件夹\monitoring-station-备份-20261003\`（43 文件，不在任何 git 仓库里）。
+- 备份对照：`D:\rdd\extras\monitoring-station-备份-20261003\`（43 文件，不在任何 git 仓库里）。
   用它跑测试得 `pass 6 / fail 1`，证明 test 2 与 smoke 里两条断言**改造前就已经红**，改的是测试不是代码。
 
 ### 本轮踩过的坑（写下来免得再犯）
@@ -141,7 +141,7 @@
   台账 4 只同伴，`ed1606db` 缓存命中 65.5%、`7a5a9659` 95.2%；水位 `ed1606db` 2.3%（22678 / 1000000）、
   `8d8d379b` 34.6%。5m / 30m / 2h 三个窗是 `idle`（最新一轮停在 7.1 小时前）——**这是诚实空态，不是 bug**。
 - 新增 `/api/token-rate` 路由需要**重启 `server.mjs`** 才生效（静态文件不用）。
-- 视觉取证：`C:\Users\lenovo\AppData\Local\Temp\opencode\tok-full.png`（全页 1600×1100）。
+- 视觉取证：`C:\Users\admin\AppData\Local\Temp\opencode\tok-full.png`（全页 1600×1100）。
 
 ## 本轮新增（2026-10-05 · ⑥ 实验统计 + 全站视觉统一）
 

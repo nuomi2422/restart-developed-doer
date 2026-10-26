@@ -1,14 +1,14 @@
 [CmdletBinding()]
 param(
   [Parameter(Mandatory=$true)][string]$Task,
-  [string]$Repo = 'E:\restart developing doer\minecraft-numen',
+  [string]$Repo = 'D:\rdd\workspace\minecraft-numen',
   [ValidateSet('readonly','implement')][string]$Mode = 'readonly',
   [string]$Model = 'opencode/big-pickle',
   [string]$Output = ''
 )
 $ErrorActionPreference = 'Stop'
 $cli = $null
-$candidates = @('D:\nodejs\cache\_npx\e2094862b59aac7b\node_modules\.bin\opencode.cmd')
+$candidates = @('D:\rdd\tools\node\cache\_npx\e2094862b59aac7b\node_modules\.bin\opencode.cmd')
 foreach ($name in @('opencode.cmd', 'opencode')) {
   $command = Get-Command $name -ErrorAction SilentlyContinue | Select-Object -First 1
   if ($command -and $command.Source) { $candidates += $command.Source }

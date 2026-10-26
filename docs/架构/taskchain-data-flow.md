@@ -2,7 +2,7 @@
 
 > **性质**：只读代码梳理，不改任何代码。
 > **范围**：**只看任务链**。不含自编译、AC 执行层、监测台前端、经验记忆库。
-> **来源**：`E:\restart developing doer\minecraft-numen`，分支 `codex/rdd-monitor-v2`，HEAD `395cd890`。
+> **来源**：`D:\rdd\workspace\minecraft-numen`，分支 `codex/rdd-monitor-v2`，HEAD `395cd890`。
 > **替代**：`rdd-data-flow.md`（2026-08-31 版，早于懒展开多级/条件组/世界事实，已不反映真身）。旧文档保留作历史对照。
 >
 > 覆盖源文件：`rdd-core/` 7 个 + `plugins/rdd/` 18 个（共 ~4900 行）。

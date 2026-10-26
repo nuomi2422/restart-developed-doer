@@ -27,14 +27,14 @@ const EXIT_USAGE = 3;
 // jar 构建发生在 commit 之后几分钟是正常的，30 分钟内不算「没部署」
 const TOLERANCE_MS = 30 * 60 * 1000;
 
-const DEFAULT_SRC = 'E:\\restart developing doer\\minecraft-numen';
-// ★ 只扫 live（= gpt 实例 = E:\.minecraft\versions\The Best of Twilight Forest）。
+const DEFAULT_SRC = 'D:\\rdd\\workspace\\minecraft-numen';
+// ★ 只扫 live（= gpt 实例 = D:\rdd\mc\The Best of Twilight Forest）。
 //   用户 2026-10-01 确认：现在只用 live，instances\test 已不再使用 → 不计入债。
 //   test 目录仍在磁盘上，要查就显式 --mods <路径> 或 --all-instances。
 const DEFAULT_MODS = [
-  'E:\\.minecraft\\versions\\The Best of Twilight Forest\\mods',   // ← live（唯一在用）
+  'D:\\rdd\\mc\\The Best of Twilight Forest\\mods',   // ← live（唯一在用）
 ];
-const TEST_MODS = 'E:\\restart developing doer\\rdd-selfcompile\\instances\\test\\mods';
+const TEST_MODS = 'D:\\rdd\\workspace\\rdd-selfcompile\\instances\\test\\mods';
 
 /** jar 文件名主干 → git 源码目录（按依赖关系配对） */
 const JAR_TO_MODULE = {

@@ -5,14 +5,14 @@
 # id after a failed workspace creation.  Keep one explicit shared config object
 # instead; it is overwritten on every invocation and never serialized.
 $global:RDD_SC = [pscustomobject]@{
-    SC_ROOT         = "E:\restart developing doer\rdd-selfcompile"
-    SC_MUTATIONS    = "E:\restart developing doer\rdd-selfcompile\mutations"
-    SC_REPORT       = "E:\restart developing doer\rdd-selfcompile\report"
-    NUMMEN_REPO     = "E:\restart developing doer\minecraft-numen"
+    SC_ROOT         = "D:\rdd\workspace\rdd-selfcompile"
+    SC_MUTATIONS    = "D:\rdd\workspace\rdd-selfcompile\mutations"
+    SC_REPORT       = "D:\rdd\workspace\rdd-selfcompile\report"
+    NUMMEN_REPO     = "D:\rdd\workspace\minecraft-numen"
     PLUGIN_MODULE   = "plugins:selfcompile"
     PLUGIN_JAR_GLOB = "plugins\selfcompile\build\libs\numen-plugin-selfcompile-*.jar"
-    GRADLE          = "E:\restart developing doer\gradle-9.2.0\bin\gradle.bat"
-    JAVA_HOME       = "E:\jdk21\jdk-21.0.11+10"
+    GRADLE          = "D:\rdd\workspace\gradle-9.2.0\bin\gradle.bat"
+    JAVA_HOME       = "D:\rdd\tools\jdk21\jdk-21.0.11+10"
     # 2026-10-18: proxy is opt-in now (host switched to direct outbound). Set
     # RDD_GRADLE_PROXY=<port> to inject the local proxy again; empty = direct.
     GRADLE_OPTS     = $(if ($env:RDD_GRADLE_PROXY) { "-Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=$($env:RDD_GRADLE_PROXY) -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=$($env:RDD_GRADLE_PROXY)" } else { "" })
@@ -22,9 +22,9 @@ $global:RDD_SC = [pscustomobject]@{
     # 全部失配 —— loop-gate 读不到测试日志、stager ctx 指向不存在的目录。
     # 现在 PowerShell 侧一律从这里取；node 侧读 stager/core/stages.json 的 docsRoot。
     # 两边同源，改位置只改这两行。
-    DOCS_ROOT    = "E:\新建文件夹\rdd-docs\rdd架构"
-    DOCS_UNIFIED = "E:\新建文件夹\rdd-docs\rdd架构\自编译统一版"
-    DOCS_OUT     = "E:\新建文件夹\rdd-docs\rdd存放"
+    DOCS_ROOT    = "D:\rdd\docs\rdd-docs\rdd架构"
+    DOCS_UNIFIED = "D:\rdd\docs\rdd-docs\rdd架构\自编译统一版"
+    DOCS_OUT     = "D:\rdd\docs\rdd-docs\rdd存放"
 }
 
 function Select-RddSelfCompileInstance {
@@ -37,14 +37,14 @@ function Select-RddSelfCompileInstance {
     $global:RDD_SC | Add-Member -NotePropertyName SC_INSTANCE -NotePropertyValue $Instance -Force
 
     if ($Instance -eq 'test') {
-        $global:RDD_SC | Add-Member -NotePropertyName MC_GAME_DIR -NotePropertyValue "E:\restart developing doer\rdd-selfcompile\instances\test" -Force
+        $global:RDD_SC | Add-Member -NotePropertyName MC_GAME_DIR -NotePropertyValue "D:\rdd\workspace\rdd-selfcompile\instances\test" -Force
         $global:RDD_SC | Add-Member -NotePropertyName MC_BAT -NotePropertyValue (Join-Path $global:RDD_SC.MC_GAME_DIR "launch-test.cmd") -Force
         $global:RDD_SC | Add-Member -NotePropertyName MC_SAVE -NotePropertyValue 'test' -Force
         $global:RDD_SC | Add-Member -NotePropertyName MONITOR_URL -NotePropertyValue $(if ($env:RDD_MONITOR_URL) { $env:RDD_MONITOR_URL } else { 'http://127.0.0.1:8777' }) -Force
     } else {
         # Production is opt-in only. This preserves the old gpt layout but does
         # not make it a default mutation target.
-        $global:RDD_SC | Add-Member -NotePropertyName MC_GAME_DIR -NotePropertyValue "E:\.minecraft\versions\The Best of Twilight Forest" -Force
+        $global:RDD_SC | Add-Member -NotePropertyName MC_GAME_DIR -NotePropertyValue "D:\rdd\mc\The Best of Twilight Forest" -Force
         # Avoid hardcoding the Chinese-named launcher bat. This file is BOM-less UTF-8
         # and PS5.1 misreads Chinese bytes; worse, a trailing Chinese char before a
         # line break can even SWALLOW the newline and comment out the next line.

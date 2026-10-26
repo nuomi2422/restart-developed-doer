@@ -14,7 +14,7 @@
 node .\check-runtime-deployment.js
 
 # 只扫生产实例
-node .\check-runtime-deployment.js --mods "E:\.minecraft\versions\The Best of Twilight Forest\mods"
+node .\check-runtime-deployment.js --mods "D:\rdd\mc\The Best of Twilight Forest\mods"
 
 # 换个源码仓库/实例
 node .\check-runtime-deployment.js --src "<minecraft-numen 路径>" --mods "<mods 目录>" --mods "<另一个>"

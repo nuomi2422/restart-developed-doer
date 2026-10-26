@@ -15,12 +15,13 @@ import { createTokenView } from './token-view.mjs';
 import { createExperimentStatsView } from './experiment-stats.mjs';
 import { createWorldFactsView } from './world-facts.mjs';
 import { createEconomyView } from './economy.mjs';
+import { createSemanticsView } from "./semantics.mjs";
 
 const HERE = resolve(fileURLToPath(new URL(".", import.meta.url)));
 const PROJECT = resolve(HERE, "..");
 const HOST = process.env.RDD_MONITOR_HOST || "127.0.0.1";
 const PORT = Number.parseInt(process.env.RDD_MONITOR_PORT || "8776", 10);
-const MONITOR_DIR = resolve(process.env.NUMEN_MONITOR_DIR || process.argv[2] || "E:/.minecraft/versions/The Best of Twilight Forest/config/numen/monitor");
+const MONITOR_DIR = resolve(process.env.NUMEN_MONITOR_DIR || process.argv[2] || "D:/rdd/mc/The Best of Twilight Forest/config/numen/monitor");
 const MAX_FILE_BYTES = 4 * 1024 * 1024;
 const MAX_EVENTS = 500;
 const MIME = { ".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".json": "application/json; charset=utf-8", ".md": "text/markdown; charset=utf-8", ".woff2": "font/woff2", ".ttf": "font/ttf", ".otf": "font/otf" };
@@ -66,6 +67,8 @@ const experimentStatsView = createExperimentStatsView(MONITOR_DIR);
 // 而且「已接入/未接入」是**运行时探测**出来的 —— 后来的 AI 把数据接上，页面自动翻绿。
 const worldFactsView = createWorldFactsView(MONITOR_DIR);
 const economyView = createEconomyView(MONITOR_DIR);
+// P0-C（81 号 §6）：语义资产只读窗口。configDir = <gamedir>/config/numen（与经验库同一层）。
+const semanticsView = createSemanticsView(resolve(MONITOR_DIR, '..'));
 
 function headers(type) {
   return { "Content-Type": type, "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", "Access-Control-Allow-Origin": "http://127.0.0.1:" + PORT };
@@ -148,7 +151,7 @@ async function snapshot() {
 // 从最新日志（从后往前最多 2000 行）解析 numen-* 决策行。
 const NumenLogParser = (() => {
   const LOG_PATH = resolve(process.env.NUMEN_LOG_PATH ||
-    "E:\\.minecraft\\versions\\The Best of Twilight Forest\\logs\\latest.log");
+    "D:\\rdd\\mc\\The Best of Twilight Forest\\logs\\latest.log");
   const MAX_LINES = 2000;
   const MAX_RETURN = 300;
 
@@ -298,6 +301,12 @@ if (url.pathname === "/api/acx") {
   // 经济与开关（骨架页）：acx 库 + 磁盘脚本 + 落盘记录 + 运行事件流
   if (url.pathname === "/api/economy") {
     try { return json(response, 200, await economyView.all()); }
+    catch (e) { return json(response, 500, { ok: false, error: String(e.message) }); }
+  }
+  // 语义资产（P0-C）：只读 <config/numen>/rdd-semantics/<uuid>.json。
+  // 四态分开（NO_DIRECTORY / NO_FILES / CORRUPT / PARTIAL / OK），不把「没派生」显示成「0 条」。
+  if (url.pathname === "/api/rdd-semantics") {
+    try { return json(response, 200, await semanticsView.all()); }
     catch (e) { return json(response, 500, { ok: false, error: String(e.message) }); }
   }
   if (url.pathname === '/api/tool-catalog') return json(response, 200, await toolCatalog.read());

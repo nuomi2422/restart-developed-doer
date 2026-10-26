@@ -38,8 +38,8 @@ const path = require('path');
 const { execFileSync } = require('child_process');
 
 const SCRIPTS = __dirname;
-const REPO = 'E:/restart developing doer/minecraft-numen';
-const ARCH = 'E:/新建文件夹/rdd-docs/rdd架构';
+const REPO = 'D:/rdd/workspace/minecraft-numen';
+const ARCH = 'D:/rdd/docs/rdd-docs/rdd架构';
 const UNIFIED = path.join(ARCH, '自编译统一版');
 const LOGS = path.join(ARCH, '测试日志.md');
 const UPDATELOG = path.join(UNIFIED, '09-更新日志.md');
@@ -63,7 +63,7 @@ const WREPLY_DIRS = [
   path.join(ARCH, 'brain-replies'),
 ];
 const REPORT_DIR = path.join(SCRIPTS, '..', 'report');
-const INSTANCE_ROOT = 'E:/restart developing doer/rdd-selfcompile/instances';
+const INSTANCE_ROOT = 'D:/rdd/workspace/rdd-selfcompile/instances';
 
 // ---------- 参数 ----------
 function arg(name, dflt) {
@@ -305,7 +305,7 @@ function listFilesUnder(root, depthLimit) {
   let evHit = [], evTotal = 0;
   for (const inst of ['test', 'gpt']) {
     const md = inst === 'gpt'
-      ? 'E:/.minecraft/versions/The Best of Twilight Forest/config/numen/monitor'
+      ? 'D:/rdd/mc/The Best of Twilight Forest/config/numen/monitor'
       : path.join(INSTANCE_ROOT, inst, 'config', 'numen', 'monitor');
     if (!exists(md)) continue;
     let files = [];

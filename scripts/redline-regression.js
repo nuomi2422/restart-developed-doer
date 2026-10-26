@@ -12,12 +12,12 @@ const fs = require('fs');
 const path = require('path');
 
 const cfgPath = process.env.NUMEN_MCP_CONFIG ||
-  'E:\\.minecraft\\versions\\The Best of Twilight Forest\\config\\numen\\mcp_server.json';
+  'D:\\rdd\\mc\\The Best of Twilight Forest\\config\\numen\\mcp_server.json';
 const cfg = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
 const COMP = process.argv[2] || 'rdd';
 const T2_TIMEOUT_MS = parseInt(process.env.T2_TIMEOUT_MS || '300000', 10); // 5min
 const T3_TIMEOUT_MS = parseInt(process.env.T3_TIMEOUT_MS || '180000', 10); // 3min
-const OUT = 'E:\\新建文件夹\\rdd-docs\\rdd架构\\特殊模式\\_regression\\redline-regression-latest.json';
+const OUT = 'D:\\rdd\\docs\\rdd-docs\\rdd架构\\特殊模式\\_regression\\redline-regression-latest.json';
 
 function post(body, sid) {
   return new Promise((res, rej) => {

@@ -31,7 +31,7 @@ const path = require('path');
 const EXIT_OK = 0;
 const EXIT_USAGE = 3;
 
-const DEFAULT_DIR = 'E:\\.minecraft\\versions\\The Best of Twilight Forest\\config\\numen\\monitor';
+const DEFAULT_DIR = 'D:\\rdd\\mc\\The Best of Twilight Forest\\config\\numen\\monitor';
 const LLM_FILES = ['context.jsonl', 'rdd.jsonl', 'learner.jsonl', 'ai.jsonl', 'expmem.jsonl'];
 const TOOLS_FILE = 'tools.jsonl';
 

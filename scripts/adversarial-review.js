@@ -21,8 +21,8 @@ const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
 
-const ROOT = 'E:/restart developing doer';
-const CLI = 'D:/nodejs/cache/_npx/e2094862b59aac7b/node_modules/.bin/opencode.cmd';
+const ROOT = 'D:/rdd/workspace';
+const CLI = 'D:/rdd/tools/node/cache/_npx/e2094862b59aac7b/node_modules/.bin/opencode.cmd';
 const REPORT = path.join(ROOT, 'rdd-selfcompile/report/adversarial');
 
 const argv = process.argv.slice(2);

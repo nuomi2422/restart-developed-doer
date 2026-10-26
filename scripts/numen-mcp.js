@@ -9,7 +9,7 @@ const http = require('http');
 const fs = require('fs');
 
 const cfgPath = process.env.NUMEN_MCP_CONFIG ||
-  'E:\\.minecraft\\versions\\The Best of Twilight Forest\\config\\numen\\mcp_server.json';
+  'D:\\rdd\\mc\\The Best of Twilight Forest\\config\\numen\\mcp_server.json';
 const cfg = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
 const HOST = process.env.NUMEN_MCP_HOST || cfg.host || '127.0.0.1';
 const PORT = parseInt(process.env.NUMEN_MCP_PORT || cfg.port || '8765', 10);

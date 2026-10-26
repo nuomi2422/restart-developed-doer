@@ -1,5 +1,5 @@
 // selfcompile-store.js -- 模块化回滚存储管理（按 self-compile-rollback.md 契约实装）
-// store: E:\restart developing doer\rdd-selfcompile\selfcompile\{mutations,candidates,stable,archive}\ + active.json
+// store: D:\rdd\workspace\rdd-selfcompile\selfcompile\{mutations,candidates,stable,archive}\ + active.json
 // 用法:
 //   node selfcompile-store.js status
 //   node selfcompile-store.js promote -m rdd -v <ver> -jar <path> [--state VERIFIED|CANDIDATE] [--note "..."] [--parent <commit>]
@@ -8,9 +8,9 @@
 const fs = require('fs');
 const path = require('path');
 
-const STORE = 'E:\\restart developing doer\\rdd-selfcompile\\selfcompile';
+const STORE = 'D:\\rdd\\workspace\\rdd-selfcompile\\selfcompile';
 const ACTIVE = path.join(STORE, 'active.json');
-const MODS = { gpt: 'E:\\.minecraft\\versions\\The Best of Twilight Forest\\mods' };
+const MODS = { gpt: 'D:\\rdd\\mc\\The Best of Twilight Forest\\mods' };
 
 function readActive() {
   if (!fs.existsSync(ACTIVE)) return { schema_version: 1, modules: {}, updatedAt: new Date().toISOString() };

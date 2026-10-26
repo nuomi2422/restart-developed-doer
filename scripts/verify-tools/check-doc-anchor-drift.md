@@ -13,8 +13,8 @@
 
 ```powershell
 # 基本用法（退出码有意义，能当证据用）
-node .\check-doc-anchor-drift.js --docs "E:\新建文件夹\rdd-docs\rdd架构\自编译统一版" `
-                                  --src  "E:\restart developing doer\minecraft-numen"
+node .\check-doc-anchor-drift.js --docs "D:\rdd\docs\rdd-docs\rdd架构\自编译统一版" `
+                                  --src  "D:\rdd\workspace\minecraft-numen"
 
 # 多个文档目录一起查
 node .\check-doc-anchor-drift.js --docs "<目录A>" --docs "<目录B>" --src "<源码根>"

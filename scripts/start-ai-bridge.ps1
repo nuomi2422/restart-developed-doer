@@ -21,5 +21,5 @@ if (-not $env:AI_BRIDGE_MCP_TOKEN) {
     exit 1
 }
 
-$env:AI_BRIDGE_LOG = "C:\Users\lenovo\AppData\Local\Temp\opencode\ai-bridge-server.log"
-& "D:\nodejs\node.exe" "E:\restart developing doer\rdd-selfcompile\ai-bridge\mcp-server\index.js"
+$env:AI_BRIDGE_LOG = "C:\Users\admin\AppData\Local\Temp\opencode\ai-bridge-server.log"
+& "D:\rdd\tools\node\node.exe" "D:\rdd\workspace\rdd-selfcompile\ai-bridge\mcp-server\index.js"

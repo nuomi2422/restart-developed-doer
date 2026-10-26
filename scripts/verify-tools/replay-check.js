@@ -37,7 +37,7 @@ const EXIT_OK = 0;
 const EXIT_BAD = 1;
 const EXIT_USAGE = 3;
 
-const DEFAULT_DIR = 'E:\\.minecraft\\versions\\The Best of Twilight Forest\\config\\numen\\monitor';
+const DEFAULT_DIR = 'D:\\rdd\\mc\\The Best of Twilight Forest\\config\\numen\\monitor';
 const REQUEST_FILES = ['context.jsonl', 'rdd.jsonl', 'learner.jsonl', 'ai.jsonl'];
 
 function parseArgs(argv) {

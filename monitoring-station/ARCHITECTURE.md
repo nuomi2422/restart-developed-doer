@@ -61,8 +61,8 @@ AI 思考 → user_prompt/assistant/turn（context/ai.jsonl）
 
 ```text
 启动监测台：
-  $env:NUMEN_MONITOR_DIR="E:\.minecraft\versions\The Best of Twilight Forest\config\numen\monitor"
-  node "E:\TouhouLittleMaid-HeartPact\monitoring-station\server.mjs"
+  $env:NUMEN_MONITOR_DIR="D:\rdd\mc\The Best of Twilight Forest\config\numen\monitor"
+  node "D:\rdd\upstream\TouhouLittleMaid-HeartPact\monitoring-station\server.mjs"
 
 API：
   /api/snapshot    读所有分类 JSONL

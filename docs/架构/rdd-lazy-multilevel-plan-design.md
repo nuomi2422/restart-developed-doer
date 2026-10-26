@@ -1,7 +1,7 @@
 # RDD 懒展开多级规划 —— 设计（2026-09-06 用户批准）
 
 > 状态：设计已批准，**实现尚未开工、实现位置待用户排**。
-> 实现仓库 `E:\restart developing doer\minecraft-numen`（分支 codex/rdd-monitor-v2）。
+> 实现仓库 `D:\rdd\workspace\minecraft-numen`（分支 codex/rdd-monitor-v2）。
 > 本会话已交付两批（见文末），本设计是下一批。
 > 注：用户另有 test 实例 = 测工具用（编译系统验自己写的代码/进游戏档试工具），**不是**承接本设计的。
 

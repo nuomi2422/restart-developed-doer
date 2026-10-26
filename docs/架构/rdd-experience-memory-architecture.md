@@ -401,7 +401,7 @@ Numen Chat AI
 ### 12.1 代码落地位置（已提交 commit 93a4bcd2 + 64832050）
 
 ```text
-E:\restart developing doer\minecraft-numen
+D:\rdd\workspace\minecraft-numen
 ├── experience-core/                     纯 JVM，零 MC/Numen 依赖，可独立单测
 │   └── src/main/java/com/dwinovo/numen/experience/
 │       ├── api/    ExperienceType / ExperienceMaturity / ExperienceEntry

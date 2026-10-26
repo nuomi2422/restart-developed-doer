@@ -34,7 +34,7 @@ const LOG_TOKENS = process.env.PROXY_LOG_TOKENS !== '0';
 function readKey() {
   if (process.env.OPENROUTER_API_KEY) return process.env.OPENROUTER_API_KEY;
   if (process.env.OPENROUTER_KEY) return process.env.OPENROUTER_KEY;
-  const p = 'C:\\Users\\lenovo\\.config\\opencode\\opencode.json';
+  const p = 'C:\\Users\\admin\\.config\\opencode\\opencode.json';
   try {
     const j = JSON.parse(fs.readFileSync(p, 'utf8'));
     return (j.provider && j.provider.openrouter && j.provider.openrouter.options && j.provider.openrouter.options.apiKey) || '';

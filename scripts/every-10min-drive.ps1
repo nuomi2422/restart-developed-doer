@@ -19,7 +19,7 @@ param(
   [switch]$DryRun,
   [switch]$RestartOnStall,
   [int]$StallLimit = 3,
-  [string]$Base = "E:\restart developing doer\rdd-selfcompile\scripts"
+  [string]$Base = "D:\rdd\workspace\rdd-selfcompile\scripts"
 )
 
 # =====================================================================
@@ -41,7 +41,7 @@ param(
 #   已同步：autostart-dev.ps1 改成默认不启动 watchdog（要开加 -WithWatchdog）。
 # =====================================================================
 if ($env:RDD_ENABLE_SELFDRIVE -ne "1") {
-  $log0 = 'E:\restart developing doer\rdd-selfcompile\scripts\every-10min-drive.log'
+  $log0 = 'D:\rdd\workspace\rdd-selfcompile\scripts\every-10min-drive.log'
   try {
     Add-Content -LiteralPath $log0 -Encoding UTF8 `
       ("[{0}] SKIPPED — 总闸关闭（未设 RDD_ENABLE_SELFDRIVE=1），不注入任何内容。" -f (Get-Date).ToString('s'))
@@ -196,8 +196,8 @@ function Read-Queue {
 
 # 游戏内 selfcompile 请求落盘目录（每个 MC 实例一个；非终态 manifest = 待处理）。
 $global:BP_MutationDirs = @(
-  "E:\.minecraft\versions\The Best of Twilight Forest\config\numen\selfcompile\mutations",
-  "E:\restart developing doer\rdd-selfcompile\instances\test\config\numen\selfcompile\mutations"
+  "D:\rdd\mc\The Best of Twilight Forest\config\numen\selfcompile\mutations",
+  "D:\rdd\workspace\rdd-selfcompile\instances\test\config\numen\selfcompile\mutations"
 )
 
 # 汇总“待处理自变异请求”，供 nudge 文本带上——让执行 AI 每轮都能注意到，不靠人工提醒。

@@ -17,7 +17,7 @@
 //
 // 环境变量（可选）：
 //   W_CDP_PORT   默认 9222；连不上则回退持久化 profile
-//   W_PROFILE    默认 C:\Users\lenovo\.playwright-profile
+//   W_PROFILE    默认 C:\Users\admin\.playwright-profile
 //   W_HEADLESS=1 无头（默认有头，便于人工过验证码/登录）
 //   W_TIMEOUT_MS 等待回复稳定上限，默认 600000
 //   W_REPLY_DIR  回复落盘目录
@@ -28,7 +28,7 @@ function resolvePlaywright() {
   const tries = [
     'playwright',
     process.env.PLAYWRIGHT_PATH,
-    'D:/nodejs/global/node_modules/@playwright/mcp/node_modules/playwright',
+    'D:/rdd/tools/node/global/node_modules/@playwright/mcp/node_modules/playwright',
   ].filter(Boolean);
   for (const t of tries) {
     try { return require(t); } catch (e) { /* next */ }
@@ -41,10 +41,10 @@ const fs = require('fs');
 const path = require('path');
 
 const CDP_PORT = process.env.W_CDP_PORT || '9223';
-const PROFILE = process.env.W_PROFILE || 'C:\\Users\\lenovo\\.playwright-profile-w';
+const PROFILE = process.env.W_PROFILE || 'C:\\Users\\admin\\.playwright-profile-w';
 const HEADLESS = process.env.W_HEADLESS === '1';
 const TIMEOUT_MS = parseInt(process.env.W_TIMEOUT_MS || '600000', 10);
-const REPLY_DIR = process.env.W_REPLY_DIR || 'E:\\restart developing doer\\rdd-selfcompile\\report\\w-replies';
+const REPLY_DIR = process.env.W_REPLY_DIR || 'D:\\rdd\\workspace\\rdd-selfcompile\\report\\w-replies';
 
 // ★ 白名单：整个 W 层只允许这两家。改这里就改了池子，不用改 DEFAULT_PLATFORMS 和 w-platforms.json。
 //   顺序 = askall 的问询顺序（先便宜/先出稿的一家先问，省得等两家都跑完）。

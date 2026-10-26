@@ -27,11 +27,11 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$SC_ROOT = 'E:\restart developing doer\rdd-selfcompile'
+$SC_ROOT = 'D:\rdd\workspace\rdd-selfcompile'
 # NOTE: PS5.1 reads this BOM-less UTF-8 script with the ANSI code page, so a
 # literal Chinese path here would be mis-decoded (modules created under a
 # mojibake dir). Keep the default root ASCII-only by decoding it from Base64
-# at runtime. Root = 'E:\新建文件夹\rdd-docs\rdd架构\特殊模式'. Override with -Root or
+# at runtime. Root = 'D:\rdd\docs\rdd-docs\rdd架构\特殊模式'. Override with -Root or
 # env SPECIAL_MODE_ROOT (ASCII writable path) when needed.
 if (-not $Root) {
   if ($env:SPECIAL_MODE_ROOT) { $Root = $env:SPECIAL_MODE_ROOT }
@@ -40,7 +40,7 @@ if (-not $Root) {
 $Templates = Join-Path $SC_ROOT 'templates\special-mode'
 $WBrain = Join-Path $SC_ROOT 'scripts\w-brain-drive.js'
 $CodexRun = Join-Path $SC_ROOT 'scripts\codex-run.ps1'
-$Node = 'D:\nodejs\node.exe'
+$Node = 'D:\rdd\tools\node\node.exe'
 
 $VALID_STATES = @('INTENT', 'REQ_DRAFT', 'W_SURVEY', 'W_SYNTH', 'O_GLM_NEGOTIATE', 'REQ_FINAL',
   'IMPL', 'UNIT_TEST', 'W_REVIEW', 'MC_TEST', 'VERDICT', 'C_REVIEW', 'ARCH_STRESS', 'DONE')

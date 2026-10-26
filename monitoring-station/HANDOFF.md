@@ -13,18 +13,18 @@
 
 | 项 | 位置 | 状态 |
 |---|---|---|
-| Numen 监测出口 `MonitoringJournal` | `E:\restart developing doer\minecraft-numen\api\common\src\main\java\com\dwinovo\numen\monitor\MonitoringJournal.java` | ✅ |
+| Numen 监测出口 `MonitoringJournal` | `D:\rdd\workspace\minecraft-numen\api\common\src\main\java\com\dwinovo\numen\monitor\MonitoringJournal.java` | ✅ |
 | 世界事件接入 | `...\event\NumenEvents.java` | ✅ |
 | 同伴状态接入 | `...\entity\CompanionStateWatch.java` | ✅ |
 | 工具调用入口/拒绝接入 | `...\network\payload\ExecuteToolPayload.java` | ✅ |
-| 游戏内监测页 | `E:\restart developing doer\minecraft-numen\api\common\src\client\java\com\dwinovo\numen\client\screen\MonitoringScreen.java` | ✅ 源码已写 |
+| 游戏内监测页 | `D:\rdd\workspace\minecraft-numen\api\common\src\client\java\com\dwinovo\numen\client\screen\MonitoringScreen.java` | ✅ 源码已写 |
 | 游戏内 M 键入口 | `...\client\NumenKeys.java` | ✅ 源码已写 |
 | NeoForge / Fabric 按键注册 | `NumenNeoForgeClient.java` / `NumenFabricClient.java` | ✅ 源码已写 |
 | 中英文语言键 | `...\data\ModLanguageData.java` | ✅ |
-| 外部浏览器监测台 | `E:\TouhouLittleMaid-HeartPact\monitoring-station\`（index/server/css/js） | ✅ |
+| 外部浏览器监测台 | `D:\rdd\upstream\TouhouLittleMaid-HeartPact\monitoring-station\`（index/server/css/js） | ✅ |
 | 浏览器实时读取 Numen JSONL | `js\numen-adapter.js` + `server.mjs` | ✅ |
 | 接口/契约/回归文档 | `INTERFACES.md` / `CONTRACT.md` / `REGRESSION.md` / `ARCHITECTURE.md` | ✅ |
-| 架构定位文档 | `E:\新建文件夹\rdd架构\rdd-monitoring-station.md` | ✅ |
+| 架构定位文档 | `D:\rdd\docs\rdd-docs\rdd架构\rdd-monitoring-station.md` | ✅ |
 
 ### 真实数据链路（当前已通）
 
@@ -44,7 +44,7 @@ Numen 运行
 {
   "ok": true,
   "source": "numen-jsonl",
-  "monitorDir": "E:\\.minecraft\\versions\\The Best of Twilight Forest\\config\\numen\\monitor",
+  "monitorDir": "D:\\rdd\\mc\\The Best of Twilight Forest\\config\\numen\\monitor",
   "total": 325
 }
 ```
@@ -94,7 +94,7 @@ http://127.0.0.1:8776/
 浏览器与游戏内都读取同一实例目录：
 
 ```text
-E:\.minecraft\versions\The Best of Twilight Forest\config\numen\monitor\
+D:\rdd\mc\The Best of Twilight Forest\config\numen\monitor\
 ```
 
 ---
@@ -102,11 +102,11 @@ E:\.minecraft\versions\The Best of Twilight Forest\config\numen\monitor\
 ## 3. 重要运维命令
 
 启动监测台服务（必须指定游戏实例目录，否则会读空目录）：
-> 现行 live 副本在 `E:\restart developing doer\rdd-monitor-publish-20260913\monitoring-station`（2026-09-24 hash 比对，8776 服务的即此份）；下方旧 HeartPact 路径已不再使用。
+> 现行 live 副本在 `D:\rdd\workspace\rdd-monitor-publish-20260913\monitoring-station`（2026-09-24 hash 比对，8776 服务的即此份）；下方旧 HeartPact 路径已不再使用。
 
 ```powershell
-$env:NUMEN_MONITOR_DIR="E:\.minecraft\versions\The Best of Twilight Forest\config\numen\monitor"
-node "E:\restart developing doer\rdd-monitor-publish-20260913\monitoring-station\server.mjs"
+$env:NUMEN_MONITOR_DIR="D:\rdd\mc\The Best of Twilight Forest\config\numen\monitor"
+node "D:\rdd\workspace\rdd-monitor-publish-20260913\monitoring-station\server.mjs"
 ```
 
 API：

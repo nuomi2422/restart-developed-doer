@@ -52,11 +52,11 @@
 const { execFileSync } = require('child_process');
 const fs = require('fs');
 
-const ROOT = 'E:/restart developing doer';
+const ROOT = 'D:/rdd/workspace';
 const SCRIPTS = ROOT + '/rdd-selfcompile/scripts';
 const LAUNCH = SCRIPTS + '/launch-mc.ps1';
 const PS = 'powershell.exe';
-const GAME = 'E:/.minecraft/versions/The Best of Twilight Forest';
+const GAME = 'D:/rdd/mc/The Best of Twilight Forest';
 
 const ARGV = process.argv.slice(2);
 const POS = ARGV.filter((a) => !a.startsWith('--'));

@@ -1,7 +1,7 @@
 ﻿const http=require('http'),WebSocket=require('ws');
 const fs=require('fs'),path=require('path');
 const HOST='127.0.0.1',PORT=9222;
-const REPLY_DIR='E:\\restart developing doer\\minecraft-numen\\.ds-replies';
+const REPLY_DIR='D:\\rdd\\workspace\\minecraft-numen\\.ds-replies';
 if(!fs.existsSync(REPLY_DIR))fs.mkdirSync(REPLY_DIR,{recursive:true});
 function reqList(url){return new Promise((ok,no)=>http.get({host:HOST,port:PORT,path:url,timeout:8000},r=>{let b='';r.on('data',d=>b+=d);r.on('end',()=>ok(JSON.parse(b)))}).on('error',no));}
 (async()=>{

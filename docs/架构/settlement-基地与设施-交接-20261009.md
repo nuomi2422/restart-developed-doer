@@ -12,13 +12,13 @@
 ## 1. 交付物（代码）
 
 ### 1.1 新模块 `settlement-core`（host-agnostic，纯 JVM 单测）
-`E:\restart developing doer\minecraft-numen\settlement-core\`
+`D:\rdd\workspace\minecraft-numen\settlement-core\`
 - 内容：模块化平面网格（`PlatformPlan`/`PlatformMath`：cellBounds/cellAt/deWall/flatten/anchor）、设施登记（`FacilityRecord`/`FacilityRegistry`）、位置级保护裁决（`ProtectionRules` + `Action`/`Grant`/`BlockClassifier`）、三层验收（`AcceptanceEvaluator` + `Verdict`/`ProductionState`/`WorldProbe`）、JSON（`SettlementJson`）。
 - 已 `include('settlement-core')` 进 settings.gradle。
 - 单测：`gradle -p minecraft-numen :settlement-core:test --offline`（42 绿）。
 
 ### 1.2 插件 `plugins:settlement`（登记真源 + 工具 + 保护执行层 + 蓝图生成器）
-`E:\restart developing doer\minecraft-numen\plugins\settlement\`
+`D:\rdd\workspace\minecraft-numen\plugins\settlement\`
 - `SettlementPlugin`（注册 16 个工具 + 事件监听 + 两类投影）/ `SettlementService`（facilities.json + base.json 持久化 + 内存 Grant）/ `SettlementProtectionListener`（NeoForge BlockEvent 拦同伴改动）/ `McWorldProbe`。
 - 工具清单：
   - 登记/查询：`settlement_register`（含显式中心 `cx/cy/cz`、`protect`/`protect_full`）、`settlement_list`、`settlement_verify`、`settlement_unregister`、`settlement_map`（网格图 + 按 cell/id 查详情）、`settlement_base`（登记基地基准）、`settlement_scan_containers`（登记箱内物品）、`count_entities_in_box`（区域实体计数）。
@@ -30,7 +30,7 @@
 - `core/common/.../task/build/BuildCompanionTask.java`：`fixConnections()` 也接到**失败出口**（未完工也补算栅栏连接）。用 `-Module core:neoforge` 部署。
 
 ### 1.4 AC 脚本
-`E:\restart developing doer\minecraft-numen\plugins\acx\src\main\resources\acx-lib\stable\lure_animals_into_pen.ac`（v5）
+`D:\rdd\workspace\minecraft-numen\plugins\acx\src\main\resources\acx-lib\stable\lure_animals_into_pen.ac`（v5）
 + 游戏 `config\numen\acx\lib\stable\lure_animals_into_pen.ac`。
 
 ---
@@ -96,9 +96,9 @@ $env:RDD_SELF_COMPILE_INSTANCE="gpt"
 ---
 
 ## 6. 关键路径速查
-- 登记真源：`E:\.minecraft\versions\The Best of Twilight Forest\config\numen\settlement\facilities.json` / `base.json`
+- 登记真源：`D:\rdd\mc\The Best of Twilight Forest\config\numen\settlement\facilities.json` / `base.json`
 - 蓝图落地：`...\schematics\*.nbt`
-- 验收单：`E:\新建文件夹\rdd-docs\rdd存放\基建夜间验收-20261009.md`
+- 验收单：`D:\rdd\docs\rdd-docs\rdd存放\基建夜间验收-20261009.md`
 - 监测台：`http://127.0.0.1:8776/`（`config\numen\monitor\acx.jsonl` 看 AC 事件；XML 存成 `\u003c` 转义）
 
 ---

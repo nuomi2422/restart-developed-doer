@@ -18,8 +18,8 @@
 # ============================================================================
 [CmdletBinding()]
 param(
-    [string]$Source = "E:\新建文件夹\rdd-docs\rdd架构\自编译统一版",
-    [string]$DestRoot = "E:\新建文件夹\rdd-docs\rdd存放",
+    [string]$Source = "D:\rdd\docs\rdd-docs\rdd架构\自编译统一版",
+    [string]$DestRoot = "D:\rdd\docs\rdd-docs\rdd存放",
     [string]$CopyName = "自编译统一版_20260927",
     [string]$ZipName = "自编译统一版_20260927.zip",
     [switch]$NoZip,

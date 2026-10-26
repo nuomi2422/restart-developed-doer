@@ -54,6 +54,7 @@
       <div class="subview" id="experiment-host" hidden></div>
       <div class="subview" id="world-facts-host" hidden></div>
       <div class="subview" id="economy-host" hidden></div>
+      <div class="subview" id="semantics-host" hidden></div>
     </section>
     <footer class="watchdog" id="watchdog"><span>观测时效</span><b id="watch-state" class="warn">未连接</b><span>新增 <i id="in-rate">0</i>/秒</span><span>显示记录 <i id="queue-depth">0</i></span><span>窗口淘汰 <i id="dropped">0</i></span><span>最后记录 <i id="last-event">—</i></span></footer>
   </main>
@@ -75,6 +76,8 @@
   <script src="js/token-view.js?v=1"></script>
   <!-- experiment-view 同理：它自己 fetch /api/experiment-stats，monitor-app 要 init 它。 -->
   <script src="js/experiment-view.js?v=1"></script>
+  <!-- 3.6 语义资产（P0-C）：自己 fetch /api/rdd-semantics。 -->
+  <script src="js/semantics-view.js?v=1"></script>
   <!-- ⑦ 世界与经济：两个骨架页，同样自己 fetch /api/world-facts 与 /api/economy。 -->
   <script src="js/world-facts-view.js?v=1"></script>
   <script src="js/economy-view.js?v=1"></script>

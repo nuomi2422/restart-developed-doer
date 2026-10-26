@@ -25,8 +25,8 @@ const flag = n => argv.includes('--' + n);
 const val = n => { const i = argv.indexOf('--' + n); return i < 0 ? null : argv[i + 1]; };
 
 const DIRS = {
-  gpt: 'E:/.minecraft/versions/The Best of Twilight Forest/config/numen/monitor',
-  test: 'E:/restart developing doer/rdd-selfcompile/instances/test/config/numen/monitor',
+  gpt: 'D:/rdd/mc/The Best of Twilight Forest/config/numen/monitor',
+  test: 'D:/rdd/workspace/rdd-selfcompile/instances/test/config/numen/monitor',
 };
 
 function load(dir) {

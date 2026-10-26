@@ -41,8 +41,8 @@ for (let i = 0; i < argv.length; i++) {
 }
 
 const MON_DIRS = [
-  ['gpt', 'E:/.minecraft/versions/The Best of Twilight Forest/config/numen/monitor'],
-  ['test', 'E:/restart developing doer/rdd-selfcompile/instances/test/config/numen/monitor'],
+  ['gpt', 'D:/rdd/mc/The Best of Twilight Forest/config/numen/monitor'],
+  ['test', 'D:/rdd/workspace/rdd-selfcompile/instances/test/config/numen/monitor'],
 ];
 
 /**

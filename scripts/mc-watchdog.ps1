@@ -17,7 +17,7 @@ param(
 
 if ([string]::IsNullOrWhiteSpace($Instance)) { $Instance = 'test' }
 if ([string]::IsNullOrWhiteSpace($GameDir)) { Write-Output 'WATCHDOG_NO_GAMEDIR'; exit 1 }
-if ([string]::IsNullOrWhiteSpace($LogPath)) { $LogPath = 'E:\restart developing doer\rdd-selfcompile\mutations\watchdog-' + $Instance + '.log' }
+if ([string]::IsNullOrWhiteSpace($LogPath)) { $LogPath = 'D:\rdd\workspace\rdd-selfcompile\mutations\watchdog-' + $Instance + '.log' }
 
 # 同一实例只允许一个看门狗存活。
 # 注意:判据必须落在**子进程命令行里真实存在的参数**上。以前这里匹配的是一个

@@ -6,11 +6,11 @@
 const { execFileSync } = require('child_process');
 const N = parseInt(process.argv[2] || '14', 10);
 const IV = parseInt(process.argv[3] || '5000', 10);
-const CLI = 'E:\\restart developing doer\\rdd-selfcompile\\scripts\\numen-mcp.js';
+const CLI = 'D:\\rdd\\workspace\\rdd-selfcompile\\scripts\\numen-mcp.js';
 
 function pos() {
   try {
-    const raw = execFileSync('D:\\nodejs\\node.exe', [CLI, 'call', 'get_self_status', 'rdd'],
+    const raw = execFileSync('D:\\rdd\\tools\\node\\node.exe', [CLI, 'call', 'get_self_status', 'rdd'],
       { encoding: 'utf8', timeout: 20000 });
     const j = JSON.parse(raw);
     const p = (j.data && j.data.position) || j.position || {};

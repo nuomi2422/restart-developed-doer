@@ -18,7 +18,7 @@ var docNames = { INTRO: "项目介绍", ARCHITECTURE: "架构总览", CONTRACT: 
   // init() 时抓住容器句柄；容器被 innerHTML 冲掉 = 把它们的输出擦掉。
   // ★ 2026-10-03 修的就是这个：原来 render() 无条件 content.innerHTML = '…' + h，
   //   而这四页的分支只调 view.render() 不给 h 赋值 → 写入字符串 "undefined"。
-  var HOSTS = ["chain-host", "experience-chain", "explib-host", "acx-host", "token-host", "experiment-host", "world-facts-host", "economy-host"];
+  var HOSTS = ["chain-host", "experience-chain", "explib-host", "acx-host", "token-host", "experiment-host", "world-facts-host", "economy-host", "semantics-host"];
   // mount 一律走 window.X 守卫：本文件在这四个 view 之前加载，
   // 直接写 ChainView.render() 会在「URL 带 #acx-runs」首屏时抛 ReferenceError。
   var EXTERNAL = {
@@ -36,7 +36,10 @@ var docNames = { INTRO: "项目介绍", ARCHITECTURE: "架构总览", CONTRACT: 
     "exp": { host: "experiment-host", mount: function () { if (window.ExperimentView) ExperimentView.render(); } },
     // ⑦ 世界与经济（骨架页）：架构里有、数据源大半没接，走独立路由显示「未接入」。
     "world-facts": { host: "world-facts-host", mount: function () { if (window.WorldFactsView) WorldFactsView.render(); } },
-    "economy": { host: "economy-host", mount: function () { if (window.EconomyView) EconomyView.render(); } }
+    "economy": { host: "economy-host", mount: function () { if (window.EconomyView) EconomyView.render(); } },
+    // 3.6 语义资产（P0-C）：走 /api/rdd-semantics。语义表在盘上、规划侧在用它，
+    // 但此前监测台一个字都看不到 —— 这一页只读，不写回、不重算 importance。
+    "semantics": { host: "semantics-host", mount: function () { if (window.SemanticsView) SemanticsView.render(); } }
   };
   function showHost(id) {
     for (var i = 0; i < HOSTS.length; i++) {
@@ -869,6 +872,7 @@ var docNames = { INTRO: "项目介绍", ARCHITECTURE: "架构总览", CONTRACT: 
   if (window.ExperimentView && ExperimentView.init) ExperimentView.init();
   if (window.WorldFactsView && WorldFactsView.init) WorldFactsView.init();
   if (window.EconomyView && EconomyView.init) EconomyView.init();
+  if (window.SemanticsView && SemanticsView.init) SemanticsView.init();
   // 首帧推到下一轮任务：日志流首批快照进来会长时间占住主线程，
   // setTimeout(0) 才有机会在两次重建之间跑掉。
   setTimeout(function () { render(); }, 0);

@@ -29,7 +29,7 @@ const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
 
-const DOCS_ROOT = 'E:\\新建文件夹\\rdd-docs';
+const DOCS_ROOT = 'D:\\rdd\\docs\\rdd-docs';
 const LEDGER_REL = 'rdd架构/自编译统一版/docs-freshness.json';
 const LEDGER = path.join(DOCS_ROOT, 'rdd架构', '自编译统一版', 'docs-freshness.json');
 const DIR = path.join(DOCS_ROOT, 'rdd架构', '自编译统一版');

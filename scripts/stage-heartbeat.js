@@ -22,9 +22,9 @@ const fs = require('fs');
 const path = require('path');
 const { execFileSync, spawn } = require('child_process');
 
-const ROOT = 'E:/restart developing doer';
+const ROOT = 'D:/rdd/workspace';
 const STAGER = path.join(ROOT, 'stager/bin/stager.js');
-const ARCH = 'E:/新建文件夹/rdd-docs/rdd架构';
+const ARCH = 'D:/rdd/docs/rdd-docs/rdd架构';
 const LOG = path.join(ROOT, 'rdd-selfcompile/selfcompile/heartbeat.log');
 const HB_STATE = path.join(ROOT, 'stager/.stager/heartbeat.json');
 
@@ -209,7 +209,7 @@ function msgSoft(st, min, budget) {
     '  3) 状态打勾了吗？（该 put 文档的 put 了、该 next 的 next 了）',
     '',
     '★ 然后必须答一次心跳（一行命令，不答我会在 T+%HARD 再问一次）：',
-    `   node "E:\\restart developing doer\\stager\\bin\\stager.js" hb-ack --stage ${st.stage} --elapsed ${min}m --status <ok|looping|blocked|waiting_user> --next "<下一步一句话>"`,
+    `   node "D:\\rdd\\workspace\\stager\\bin\\stager.js" hb-ack --stage ${st.stage} --elapsed ${min}m --status <ok|looping|blocked|waiting_user> --next "<下一步一句话>"`,
   ].join('\n');
 }
 
@@ -224,7 +224,7 @@ function msgHard(st, min, budget) {
     '  3. 如果重来一次，你打算先做什么？',
     '',
     '答完立刻执行：',
-    `   node "E:\\restart developing doer\\stager\\bin\\stager.js" hb-ack --stage ${st.stage} --elapsed ${min}m --status <ok|looping|blocked|waiting_user> --next "<下一步>"`,
+    `   node "D:\\rdd\\workspace\\stager\\bin\\stager.js" hb-ack --stage ${st.stage} --elapsed ${min}m --status <ok|looping|blocked|waiting_user> --next "<下一步>"`,
     '',
     '★ 如果答案是「需要用户决定」→ 就写一份状态报告（规格见 44-状态报告规格.md）然后停下，别硬扛。',
   ].join('\n');
@@ -278,7 +278,7 @@ function tick() {
       '  A) 判定为卡死 → 跑 `stager loop --note "心跳判定超时+<原因>"` 回计划阶段重排',
       '  B) 判定为仍在有效推进 → 跑 hb-ack 带 --status ok --next "<为什么还需要时间>"，本轮放宽到再 +20 分钟',
       '',
-      '  node "E:\\restart developing doer\\stager\\bin\\stager.js" hb-ack --stage ' + st.stage + ' --elapsed ' + min + 'm --status <ok|looping|blocked|waiting_user> --next "<...>"',
+      '  node "D:\\rdd\\workspace\\stager\\bin\\stager.js" hb-ack --stage ' + st.stage + ' --elapsed ' + min + 'm --status <ok|looping|blocked|waiting_user> --next "<...>"',
     ].join('\n');
     const r = inject(msg);
     log('ROLLBACK stage=' + st.stage + ' elapsed=' + min + ' inject=' + r);
