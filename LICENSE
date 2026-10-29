@@ -19,10 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
----
-
-Note on the host: this repository does not contain the source of the Numen
-host mod (https://github.com/Dwinovo/minecraft-numen), which is licensed
-separately under LGPL-3.0 by its own authors. The MIT grant above covers only
-the original code, documentation and scripts in this repository.
