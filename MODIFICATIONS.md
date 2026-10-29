@@ -1,6 +1,6 @@
 # 对借用宿主 Numen 的修改说明（Modifications）
 
-> 本项目（restart-developed-doer）在 **[Numen](https://github.com/Dwinovo/minecraft-numen)（NeoForge 1.21.1）** 之上做**叠加扩展**。
+> 本项目（restart-developmental-doer）在 **[Numen](https://github.com/Dwinovo/minecraft-numen)（NeoForge 1.21.1）** 之上做**叠加扩展**。
 > 本文交代我们对宿主源码的改动；全量 diff 见
 > [`patches/numen-host-modifications.patch`](patches/numen-host-modifications.patch)
 > （base = 上游 `origin/1.21.1` @ `ff743c53`）。
