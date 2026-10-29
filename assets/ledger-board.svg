@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="360" viewBox="0 0 1280 360" role="img" aria-label="RDD 台账看板：真实数据投影">
+  <title>RDD 台账看板</title>
+  <style>
+    .ui{font-family:"Saira","Noto Sans SC",system-ui,-apple-system,sans-serif}
+    .txt{font-family:"Noto Sans SC",system-ui,-apple-system,sans-serif}
+    .en{letter-spacing:.14em;text-transform:uppercase}
+    .num{font-variant-numeric:tabular-nums}
+  </style>
+
+  <rect width="1280" height="360" fill="#eef0f1"/>
+
+  <!-- panel 1: 大数字 -->
+  <rect x="40" y="24" width="580" height="150" fill="#ffffff" stroke="#d5d8da"/>
+  <rect x="40" y="24" width="580" height="3" fill="#161616"/>
+  <text x="60" y="56" class="ui en" font-size="11" font-weight="600" fill="#5c5c5c">// LEDGER</text>
+  <text x="60" y="78" class="txt" font-size="18" font-weight="800" fill="#161616">台账现状</text>
+  <text x="600" y="56" text-anchor="end" class="ui en" font-size="10" fill="#a3a3a3">READ-ONLY</text>
+  <line x1="60" y1="90" x2="600" y2="90" stroke="#d5d8da"/>
+
+  <text x="60" y="132" class="ui num" font-size="38" font-weight="800" fill="#161616">98</text>
+  <text x="60" y="154" class="txt" font-size="12" fill="#5c5c5c">已注册工具</text>
+
+  <text x="205" y="132" class="ui num" font-size="38" font-weight="800" fill="#161616">40</text>
+  <text x="205" y="154" class="txt" font-size="12" fill="#5c5c5c">门禁（进 21 / 退 19）</text>
+
+  <text x="390" y="132" class="ui num" font-size="38" font-weight="800" fill="#161616">17</text>
+  <text x="390" y="154" class="txt" font-size="12" fill="#5c5c5c">时间锁</text>
+
+  <text x="500" y="132" class="ui num" font-size="38" font-weight="800" fill="#161616">255</text>
+  <text x="500" y="154" class="txt" font-size="12" fill="#5c5c5c">实验运行</text>
+
+  <!-- panel 2: 实验判决 -->
+  <rect x="650" y="24" width="590" height="150" fill="#ffffff" stroke="#d5d8da"/>
+  <rect x="650" y="24" width="590" height="3" fill="#161616"/>
+  <text x="670" y="56" class="ui en" font-size="11" font-weight="600" fill="#5c5c5c">// VERDICTS</text>
+  <text x="670" y="78" class="txt" font-size="18" font-weight="800" fill="#161616">最近四组学习轮回</text>
+  <line x1="670" y1="90" x2="1220" y2="90" stroke="#d5d8da"/>
+
+  <!-- rows -->
+  <text x="670" y="114" class="ui en" font-size="11" font-weight="700" fill="#5c5c5c">LEARN</text>
+  <text x="760" y="114" class="txt" font-size="13" fill="#161616">4 轮 · 最远到钻石套</text>
+  <rect x="1010" y="103" width="92" height="16" fill="none" stroke="#161616"/>
+  <text x="1056" y="115" text-anchor="middle" class="ui en" font-size="10" font-weight="700" fill="#161616">2 轮更强</text>
+
+  <text x="670" y="140" class="ui en" font-size="11" font-weight="700" fill="#5c5c5c">CLEAN2</text>
+  <text x="760" y="140" class="txt" font-size="13" fill="#161616">4 轮 · 全停在石器</text>
+  <rect x="1010" y="129" width="92" height="16" fill="#7de6ff" stroke="#7de6ff"/>
+  <text x="1056" y="141" text-anchor="middle" class="ui en" font-size="10" font-weight="700" fill="#161616">REFUTES</text>
+
+  <text x="670" y="166" class="ui en" font-size="11" font-weight="700" fill="#5c5c5c">AUTO</text>
+  <text x="760" y="166" class="txt" font-size="13" fill="#161616">3 轮 · 木器到石器</text>
+  <rect x="1010" y="155" width="92" height="16" fill="none" stroke="#161616"/>
+  <text x="1056" y="167" text-anchor="middle" class="ui en" font-size="10" font-weight="700" fill="#161616">2 轮更强</text>
+
+  <text x="1120" y="140" class="txt" font-size="11" fill="#5c5c5c">跑输的也留着</text>
+
+  <!-- panel 3: 三行简报 -->
+  <rect x="40" y="198" width="1200" height="138" fill="#ffffff" stroke="#d5d8da"/>
+  <rect x="40" y="198" width="1200" height="3" fill="#161616"/>
+  <text x="60" y="230" class="ui en" font-size="11" font-weight="600" fill="#5c5c5c">// BRIEFING</text>
+  <text x="60" y="252" class="txt" font-size="18" font-weight="800" fill="#161616">三行简报</text>
+  <line x1="60" y1="264" x2="1220" y2="264" stroke="#d5d8da"/>
+
+  <text x="60" y="290" class="ui" font-size="15" font-weight="800" fill="#5c5c5c">①</text>
+  <text x="92" y="290" class="txt" font-size="13" fill="#161616">宿主 AI 在游戏里自己挖矿、合成、造工具、搭房子，判定只认背包与世界事实。</text>
+
+  <text x="60" y="312" class="ui" font-size="15" font-weight="800" fill="#5c5c5c">②</text>
+  <text x="92" y="312" class="txt" font-size="13" fill="#161616">缺能力时自己提需求，外部流水线改码、编译、部署、回游戏验证，全程留痕。</text>
+
+  <text x="60" y="334" class="ui" font-size="15" font-weight="800" fill="#5c5c5c">③</text>
+  <text x="92" y="334" class="txt" font-size="13" fill="#161616">实验判据先冻结再开跑，机器裁决；跑输的那组照样挂在仓库里。</text>
+</svg>

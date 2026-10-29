@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="240" viewBox="0 0 1280 240" role="img" aria-label="RDD · restart-developmental-doer">
+  <title>RDD · restart-developmental-doer</title>
+  <style>
+    .ui{font-family:"Saira","Noto Sans SC",system-ui,-apple-system,sans-serif}
+    .txt{font-family:"Noto Sans SC",system-ui,-apple-system,sans-serif}
+    .en{letter-spacing:.16em;text-transform:uppercase}
+  </style>
+
+  <!-- paper -->
+  <rect width="1280" height="240" fill="#eef0f1"/>
+
+  <!-- faint grid, 96px pitch -->
+  <g stroke="#161616" stroke-opacity="0.05" stroke-width="1">
+    <path d="M96 44V237M192 44V237M288 44V237M384 44V237M480 44V237M576 44V237M672 44V237M768 44V237M864 44V237M960 44V237M1056 44V237M1152 44V237M1248 44V237"/>
+  </g>
+
+  <!-- dark command bar -->
+  <rect x="0" y="0" width="1280" height="44" fill="#161616"/>
+  <rect x="40" y="11" width="22" height="22" fill="#7de6ff"/>
+  <text x="51" y="27" text-anchor="middle" class="ui" font-size="13" font-weight="800" fill="#161616">R</text>
+  <text x="74" y="27" class="ui en" font-size="14" font-weight="800" fill="#ededed">RDD · AGENT RUNTIME</text>
+  <text x="470" y="27" class="txt" font-size="12" fill="#a3a3a3">概览</text>
+  <text x="530" y="27" class="txt" font-size="12" fill="#a3a3a3">台账</text>
+  <text x="590" y="27" class="txt" font-size="12" fill="#a3a3a3">实验</text>
+  <text x="650" y="27" class="txt" font-size="12" fill="#a3a3a3">门禁</text>
+  <text x="1240" y="27" text-anchor="end" class="txt" font-size="11" fill="#a3a3a3">数据源 · 本仓 registry.json · 只读</text>
+
+  <!-- masthead -->
+  <text x="40" y="104" class="ui en" font-size="11" font-weight="600" fill="#5c5c5c">// RESIDENT AGENT RUNTIME</text>
+  <text x="40" y="166" class="ui" font-size="72" font-weight="800" fill="#161616" letter-spacing="-1">RDD</text>
+  <text x="40" y="196" class="ui" font-size="16" fill="#5c5c5c">restart-developmental-doer</text>
+
+  <text x="1240" y="104" text-anchor="end" class="txt" font-size="13" fill="#5c5c5c">当前阶段 · 实验闭环可被机器复核</text>
+  <text x="1240" y="130" text-anchor="end" class="txt" font-size="13" fill="#5c5c5c">更新日期 · 2026-10-29</text>
+  <text x="1240" y="196" text-anchor="end" class="ui en" font-size="11" fill="#a3a3a3">ASIA/SHANGHAI · 只读投影</text>
+
+  <!-- tri-colour rule -->
+  <rect x="0" y="237" width="427" height="3" fill="#ff00f0"/>
+  <rect x="427" y="237" width="426" height="3" fill="#7de6ff"/>
+  <rect x="853" y="237" width="427" height="3" fill="#00ffa2"/>
+</svg>
